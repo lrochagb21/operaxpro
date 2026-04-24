@@ -166,7 +166,28 @@ export default function OS() {
     if (!confirm('Aprovar este orcamento e converter em Ordem de Servico?')) return
     const { error } = await supabase.from('ordens_servico').update({tipo:'OS', status:'Aberta'}).eq('id',o.id)
     if (error) showMsg('Erro: '+error.message,'err')
-    else { showMsg('Orcamento aprovado e convertido em OS!','ok'); loadAll(); setModal(null) }
+    else {
+      // Criar agendamento automatico se tiver data e hora
+      if (o.data_abertura && o.hora_atendimento) {
+        const { data:session } = await supabase.auth.getSession()
+        const { data:me } = await supabase.from('usuarios').select('empresa_id').eq('auth_id',session.session.user.id).single()
+        await supabase.from('agenda').insert({
+          empresa_id: me?.empresa_id||1,
+          os_id: o.id,
+          cliente_id: o.cliente_id,
+          tecnico_id: o.tecnico_id||null,
+          titulo: (o.tipo_servico||'Atendimento')+' — '+(o.clientes?.nome||''),
+          data: o.data_abertura,
+          hora_inicio: o.hora_atendimento,
+          telefone: o.clientes?.telefone||'',
+          tipo_servico: o.tipo_servico||'',
+          status: 'agendado',
+        })
+      }
+      showMsg('Orcamento aprovado, convertido em OS e adicionado a agenda!','ok')
+      loadAll()
+      setModal(null)
+    }
   }
 
   const fmtVal = v => v ? 'R$ '+parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—'
