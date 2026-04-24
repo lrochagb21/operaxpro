@@ -42,7 +42,13 @@ export default function Agenda() {
     if(!form.data){showMsg('Informe a data','err');return}
     if(!form.hora_inicio){showMsg('Informe o horario','err');return}
     setSaving(true)
-    const {error} = await supabase.from('agenda').insert({...form,empresa_id:1,cliente_id:form.cliente_id?parseInt(form.cliente_id):null,tecnico_id:form.tecnico_id||null})
+    const {error} = await supabase.from('agenda').insert({
+      ...form,
+      empresa_id: 1,
+      cliente_id: form.cliente_id ? parseInt(form.cliente_id) : null,
+      tecnico_id: form.tecnico_id || null,
+      hora_fim: form.hora_fim || null,
+    })
     if(error) showMsg('Erro: '+error.message,'err')
     else{showMsg('Agendamento criado!','ok');setForm(ef);setMForm(false);load()}
     setSaving(false)
