@@ -69,8 +69,9 @@ export default function Dashboard() {
           <Card icon="📦" label="Estoque Baixo" value={stats.estB} change="verificar!"    up={false} color="red"/>
         </div>
         
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:24,alignItems:'start'}}>
         {agHoje.length>0&&(
-          <div style={{background:'#0F1729',border:'1px solid rgba(96,165,250,0.07)',borderRadius:16,padding:20,marginBottom:24}}>
+          <div style={{background:'#0F1729',border:'1px solid rgba(96,165,250,0.07)',borderRadius:16,padding:20}}>
             <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:16}}>
               <span style={{fontSize:18}}>📅</span>
               <span style={{fontSize:15,fontWeight:800,color:'#EEF2FF'}}>Agenda de Hoje</span>
@@ -126,6 +127,7 @@ export default function Dashboard() {
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       </div>
     </AppLayout>
