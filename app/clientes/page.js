@@ -284,7 +284,8 @@ export default function Clientes() {
                       </td></tr>
                     ) : filtered.map(c=>(
                       <tr key={c.id}
-                        onMouseEnter={e=>e.currentTarget.style.background='rgba(96,165,250,0.03)'}
+                        onClick={()=>setModal(c)}
+                        onMouseEnter={e=>{e.currentTarget.style.background='rgba(96,165,250,0.05)';e.currentTarget.style.cursor='pointer'}}
                         onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
                         <td style={{padding:'13px 16px',borderBottom:'1px solid rgba(96,165,250,0.05)'}}>
                           <div style={{fontWeight:700,color:'#EEF2FF',fontSize:14}}>{c.nome}</div>
@@ -299,7 +300,7 @@ export default function Clientes() {
                         <td style={{padding:'13px 16px',borderBottom:'1px solid rgba(96,165,250,0.05)',fontSize:12,color:'#3D5070',maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.referencia||'--'}</td>
                         <td style={{padding:'13px 16px',borderBottom:'1px solid rgba(96,165,250,0.05)',whiteSpace:'nowrap'}}>
                           <div style={{display:'flex',gap:5}}>
-                            <button onClick={()=>setModal(c)} style={{padding:'5px 10px',borderRadius:8,background:'rgba(6,182,212,.15)',border:'1px solid rgba(6,182,212,.3)',color:'#67E8F9',fontSize:11,fontWeight:600,cursor:'pointer'}}>Ver</button>
+
                             <button onClick={()=>editCli(c)} style={{padding:'5px 10px',borderRadius:8,background:'rgba(26,86,219,.15)',border:'1px solid rgba(26,86,219,.3)',color:'#60A5FA',fontSize:11,fontWeight:600,cursor:'pointer'}}>Editar</button>
                             <button onClick={()=>del(c.id)} style={{padding:'5px 10px',borderRadius:8,background:'rgba(239,68,68,.12)',border:'1px solid rgba(239,68,68,.25)',color:'#FCA5A5',fontSize:11,fontWeight:600,cursor:'pointer'}}>Remover</button>
                           </div>
