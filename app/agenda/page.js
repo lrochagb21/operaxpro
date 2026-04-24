@@ -267,7 +267,6 @@ function AgendaInner() {
                   WhatsApp
                 </button>)
               })()}
-      )}
 
       {/* MODAL NOVO */}
       {mForm&&(
