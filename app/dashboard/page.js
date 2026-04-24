@@ -25,13 +25,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function load() {
-      const [t,c,o,e,f,ag] = await Promise.all([
+      const [t,c,o,e,f] = await Promise.all([
         supabase.from('usuarios').select('id',{count:'exact'}).eq('perfil','tecnico'),
         supabase.from('clientes').select('id',{count:'exact'}),
         supabase.from('ordens_servico').select('*, clientes(nome), usuarios(nome)').order('criado_em',{ascending:false}).limit(6),
         supabase.from('estoque').select('quantidade,quantidade_minima'),
         supabase.from('financeiro').select('valor').eq('tipo','receita'),
-        supabase.from('agenda').select('*,clientes(nome),usuarios(nome)').eq('data',new Date().toISOString().split('T')[0]).order('hora_inicio',{ascending:true}),
+
       ])
       const fat = f.data?.reduce((a,x)=>a+parseFloat(x.valor),0)||0
       setStats({
@@ -42,6 +42,8 @@ export default function Dashboard() {
         estB:e.data?.filter(x=>x.quantidade<=x.quantidade_minima).length||0
       })
       setOs(o.data||[])
+      const hoje = new Date().toISOString().split('T')[0]
+      const ag = await supabase.from('agenda').select('*,clientes(nome),usuarios(nome)').eq('data',hoje).order('hora_inicio',{ascending:true})
       setAgHoje(ag.data||[])
     }
     load()
