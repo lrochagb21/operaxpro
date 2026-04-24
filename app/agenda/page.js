@@ -296,11 +296,17 @@ export default function Agenda() {
                 </div>
                 <div>
                   <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Horario Inicio *</label>
-                  <input type="time" required value={form.hora_inicio} onChange={e=>f('hora_inicio',e.target.value)} style={S}/>
+                  <select required value={form.hora_inicio} onChange={e=>f('hora_inicio',e.target.value)} style={{...S,appearance:'none',cursor:'pointer'}}>
+                    <option value="">Selecione...</option>
+                    {['00:00','00:30','01:00','01:30','02:00','02:30','03:00','03:30','04:00','04:30','05:00','05:30','06:00','06:30','07:00','07:30','08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30','23:00','23:30'].map(h=><option key={h} value={h}>{h}</option>)}
+                  </select>
                 </div>
                 <div>
                   <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Horario Fim</label>
-                  <input type="time" value={form.hora_fim} onChange={e=>f('hora_fim',e.target.value)} style={S}/>
+                  <select value={form.hora_fim} onChange={e=>f('hora_fim',e.target.value)} style={{...S,appearance:'none',cursor:'pointer'}}>
+                    <option value="">Sem horario fim</option>
+                    {['00:00','00:30','01:00','01:30','02:00','02:30','03:00','03:30','04:00','04:30','05:00','05:30','06:00','06:30','07:00','07:30','08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30','23:00','23:30'].map(h=><option key={h} value={h}>{h}</option>)}
+                  </select>
                 </div>
                 <div>
                   <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Tipo de Servico</label>
