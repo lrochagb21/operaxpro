@@ -466,7 +466,7 @@ export default function OS() {
                   modal.data_previsao ? '*Previsao:* '+new Date(modal.data_previsao+'T00:00:00').toLocaleDateString("pt-BR") : '',
                   '',
                   '_Enviado pelo OperaxPro_',
-                ].filter(Boolean).join('\n')
+                ].filter(Boolean).join('%0A')
                 const tel = telefone.replace(/\D/g,'')
                 const url = tel
                   ? 'https://wa.me/55'+tel+'?text='+encodeURIComponent(msg)
