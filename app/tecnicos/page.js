@@ -126,8 +126,8 @@ export default function Tecnicos() {
               {[
                 {k:'nome',l:'Nome Completo *',ph:'Joao Silva',req:true},
                 {k:'telefone',l:'Telefone *',ph:'(11) 99999-9999',req:true},
-                {k:'email',l:'E-mail *',ph:'joao@email.com',type:'email',req:True},
-                {k:'senha',l:'Senha Provisoria *',ph:'Minimo 6 caracteres',type:'password',req:True},
+                {k:'email',l:'E-mail *',ph:'joao@email.com',type:'email',req:true},
+                {k:'senha',l:'Senha Provisoria *',ph:'Minimo 6 caracteres',type:'password',req:true},
                 {k:'endereco',l:'Endereco',ph:'Rua, numero - Bairro'},
                 {k:'cidade',l:'Cidade / Estado',ph:'Sao Paulo / SP'},
               ].map(({k,l,ph,req,type}) => (
