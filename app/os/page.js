@@ -466,7 +466,7 @@ export default function OS() {
                   modal.data_previsao ? '*Previsao:* '+new Date(modal.data_previsao+'T00:00:00').toLocaleDateString("pt-BR") : '',
                   '',
                   '_Enviado pelo OperaxPro_',
-                ].filter(Boolean).join('%0A')
+                ].filter(Boolean).join('\n')
                 const url = 'https://wa.me/?text='+encodeURIComponent(msg)
                 window.open(url,'_blank')
               }} style={{padding:'11px 16px',borderRadius:10,background:'rgba(37,211,102,0.15)',border:'1px solid rgba(37,211,102,0.3)',color:'#25D366',fontSize:13,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
