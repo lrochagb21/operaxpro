@@ -25,7 +25,7 @@ export default function Dashboard() {
       const [t,c,o,e,f] = await Promise.all([
         supabase.from('usuarios').select('id',{count:'exact'}).eq('perfil','tecnico'),
         supabase.from('clientes').select('id',{count:'exact'}),
-        supabase.from('ordens_servico').select('*').order('criado_em',{ascending:false}).limit(6),
+        supabase.from('ordens_servico').select('*, clientes(nome), usuarios(nome)').order('criado_em',{ascending:false}).limit(6),
         supabase.from('estoque').select('quantidade,quantidade_minima'),
         supabase.from('financeiro').select('valor').eq('tipo','receita'),
       ])
