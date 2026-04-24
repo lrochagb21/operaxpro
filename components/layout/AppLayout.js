@@ -13,6 +13,10 @@ export default function AppLayout({ children }) {
       const { data:{ session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
       const { data:perfil } = await supabase.from('usuarios').select('nome,perfil,empresa_id').eq('auth_id',session.user.id).single()
+      if (perfil?.perfil === 'tecnico') {
+        router.push('/tecnico')
+        return
+      }
       setUser({ ...session.user, ...perfil })
       setLoading(false)
     }

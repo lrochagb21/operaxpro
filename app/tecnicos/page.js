@@ -29,17 +29,38 @@ export default function Tecnicos() {
     e.preventDefault()
     if (!form.nome.trim()) { showMsg('Informe o nome do tecnico','err'); return }
     if (!form.telefone.trim()) { showMsg('Informe o telefone','err'); return }
+    if (!editId && !form.email.trim()) { showMsg('Informe o email','err'); return }
+    if (!editId && form.senha.length < 6) { showMsg('A senha deve ter no minimo 6 caracteres','err'); return }
     setSaving(true)
-    const { data:{ session } } = await supabase.auth.getSession()
-    const { data:me } = await supabase.from('usuarios').select('empresa_id').eq('auth_id',session.user.id).single()
+
     if (editId) {
-      const { error } = await supabase.from('usuarios').update({...form}).eq('id',editId)
+      const updateData = {nome:form.nome,telefone:form.telefone,email:form.email,especialidade:form.especialidade,endereco:form.endereco,cidade:form.cidade,status:form.status}
+      const { error } = await supabase.from('usuarios').update(updateData).eq('id',editId)
       if (error) { showMsg('Erro: '+error.message,'err') }
       else { showMsg('Tecnico atualizado!','ok'); resetForm() }
     } else {
-      const { error } = await supabase.from('usuarios').insert({...form, perfil:'tecnico', empresa_id: me?.empresa_id || 1})
-      if (error) { showMsg('Erro: '+error.message,'err') }
-      else { showMsg('Tecnico cadastrado!','ok'); resetForm() }
+      // 1. Criar usuario no Supabase Auth via API
+      try {
+        const res = await fetch('/api/criar-tecnico', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            nome: form.nome,
+            email: form.email,
+            senha: form.senha,
+            telefone: form.telefone,
+            especialidade: form.especialidade,
+            endereco: form.endereco,
+            cidade: form.cidade,
+            status: form.status,
+          })
+        })
+        const result = await res.json()
+        if (!res.ok) { showMsg('Erro: '+result.error,'err') }
+        else { showMsg('Tecnico cadastrado! Login criado com sucesso!','ok'); resetForm() }
+      } catch(err) {
+        showMsg('Erro ao criar tecnico: '+err.message,'err')
+      }
     }
     setSaving(false)
     load()
@@ -58,7 +79,7 @@ export default function Tecnicos() {
     else { showMsg('Tecnico removido','ok'); load() }
   }
 
-  function resetForm() { setForm({nome:'',telefone:'',email:'',especialidade:'',endereco:'',cidade:'',status:'ativo'}); setEditId(null) }
+  function resetForm() { setForm({nome:'',telefone:'',email:'',especialidade:'',endereco:'',cidade:'',status:'ativo',senha:''}); setEditId(null) }
   function showMsg(text, type) { setMsg({text,type}); setTimeout(()=>setMsg({text:'',type:''}),4000) }
   function f(k,v) { setForm(p=>({...p,[k]:v})) }
 
@@ -105,7 +126,8 @@ export default function Tecnicos() {
               {[
                 {k:'nome',l:'Nome Completo *',ph:'Joao Silva',req:true},
                 {k:'telefone',l:'Telefone *',ph:'(11) 99999-9999',req:true},
-                {k:'email',l:'E-mail',ph:'joao@email.com',type:'email'},
+                {k:'email',l:'E-mail *',ph:'joao@email.com',type:'email',req:True},
+                {k:'senha',l:'Senha Provisoria *',ph:'Minimo 6 caracteres',type:'password',req:True},
                 {k:'endereco',l:'Endereco',ph:'Rua, numero - Bairro'},
                 {k:'cidade',l:'Cidade / Estado',ph:'Sao Paulo / SP'},
               ].map(({k,l,ph,req,type}) => (
