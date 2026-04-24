@@ -331,7 +331,7 @@ export default function Clientes() {
                 ['Telefone Principal',modal.telefone],
                 ['Telefone Secundario',modal.telefone2],
                 ['CEP',modal.cep],
-                ['Logradouro',`${modal.logradouro||''} ${modal.numero||''}`],
+                ['Logradouro',modal.logradouro ? `${modal.logradouro} ${modal.numero||''}` : null],
                 ['Bairro',modal.bairro],
                 ['Cidade / Estado',`${modal.cidade||''} ${modal.estado?'/ '+modal.estado:''}`],
               ].map(([l,v])=>v?(
@@ -341,6 +341,19 @@ export default function Clientes() {
                 </div>
               ):null)}
             </div>
+            {modal.logradouro&&(
+              
+                href={`https://maps.google.com/?q=${encodeURIComponent(`${modal.logradouro||''} ${modal.numero||''}, ${modal.bairro||''}, ${modal.cidade||''} - ${modal.estado||''}`)}`}
+                target="_blank" rel="noreferrer"
+                style={{display:'flex',alignItems:'center',gap:10,padding:'12px 16px',background:'rgba(6,182,212,0.08)',border:'1px solid rgba(6,182,212,0.25)',borderRadius:10,color:'#67E8F9',textDecoration:'none',fontSize:13,fontWeight:600,marginBottom:12,transition:'all .15s'}}>
+                <span style={{fontSize:18}}>📍</span>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700}}>{modal.logradouro}{modal.numero ? ', '+modal.numero : ''}</div>
+                  <div style={{fontSize:11,opacity:0.7,marginTop:1}}>{modal.bairro}{modal.cidade ? ' - '+modal.cidade : ''}{modal.estado ? ' / '+modal.estado : ''}</div>
+                </div>
+                <span style={{marginLeft:'auto',fontSize:11,opacity:0.7,whiteSpace:'nowrap'}}>Abrir no Maps →</span>
+              </a>
+            )}
             {modal.referencia&&(
               <div style={{background:'rgba(6,182,212,0.08)',border:'1px solid rgba(6,182,212,0.2)',borderRadius:10,padding:12,marginBottom:12}}>
                 <div style={{fontSize:10,fontWeight:700,color:'#67E8F9',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:5}}>Ponto de Referencia</div>
