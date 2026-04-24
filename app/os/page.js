@@ -7,7 +7,7 @@ const S = { background:'#162040', border:'1px solid rgba(96,165,250,0.13)', colo
 const STATUS = ['Aberta','Em Andamento','Aguardando Peça','Concluída','Cancelada']
 const PRIORIDADES = ['Normal','Alta','Urgente']
 const SERVICOS = ['Instalação','Manutenção Preventiva','Manutenção Corretiva','Reparo','Vistoria','Suporte Técnico','Outro']
-const empty = {tipo:'OS',prioridade:'Normal',cliente_id:'',tecnico_id:'',tipo_servico:'',status:'Aberta',valor:'',desconto:'',descricao:'',pecas:'',observacoes:'',data_abertura:'',data_previsao:''}
+const empty = {tipo:'OS',prioridade:'Normal',cliente_id:'',tecnico_id:'',tipo_servico:'',status:'Aberta',valor:'',desconto:'',descricao:'',pecas:'',observacoes:'',data_abertura:'',data_previsao:'',hora_atendimento:''}
 
 const stBadge = s => ({
   'Aberta':          {bg:'rgba(245,158,11,.15)', color:'#FCD34D'},
@@ -68,6 +68,7 @@ export default function OS() {
       tecnico_id: form.tecnico_id||null,
       data_abertura: form.data_abertura||null,
       data_previsao: form.data_previsao||null,
+      hora_atendimento: form.hora_atendimento||null,
     }
     if (editId) {
       const { error } = await supabase.from('ordens_servico').update(payload).eq('id',editId)
@@ -76,7 +77,31 @@ export default function OS() {
     } else {
       const { error } = await supabase.from('ordens_servico').insert(payload)
       if (error) showMsg('Erro: '+error.message,'err')
-      else { showMsg('OS criada com sucesso!','ok'); resetForm(); setTab('lista') }
+      else {
+        // Buscar a OS recem criada para pegar o ID
+        const { data:novaOS } = await supabase.from('ordens_servico').select('id').eq('empresa_id',me?.empresa_id||1).order('criado_em',{ascending:false}).limit(1).single()
+        // Criar agendamento automatico se tiver data e hora
+        if (form.data_abertura && form.hora_atendimento && novaOS) {
+          const cliSel = clientes.find(c=>String(c.id)===String(form.cliente_id))
+          const tecSel = tecnicos.find(t=>String(t.id)===String(form.tecnico_id))
+          await supabase.from('agenda').insert({
+            empresa_id: me?.empresa_id||1,
+            os_id: novaOS.id,
+            cliente_id: parseInt(form.cliente_id)||null,
+            tecnico_id: form.tecnico_id||null,
+            titulo: (form.tipo_servico||'Atendimento')+' — '+(cliSel?.nome||''),
+            data: form.data_abertura,
+            hora_inicio: form.hora_atendimento,
+            telefone: cliSel?.telefone||'',
+            tipo_servico: form.tipo_servico||'',
+            status: 'agendado',
+          })
+          showMsg('OS criada e adicionada a agenda automaticamente!','ok')
+        } else {
+          showMsg('OS criada com sucesso!','ok')
+        }
+        resetForm(); setTab('lista')
+      }
     }
     setSaving(false)
     loadAll()
@@ -250,6 +275,10 @@ export default function OS() {
                 <div>
                   <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Previsao de Conclusao</label>
                   <input type="date" value={form.data_previsao} onChange={e=>f('data_previsao',e.target.value)} style={S}/>
+                </div>
+                <div>
+                  <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Hora do Atendimento</label>
+                  <input type="time" value={form.hora_atendimento} onChange={e=>f('hora_atendimento',e.target.value)} style={S}/>
                 </div>
                 <div>
                   <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Valor do Servico (R$)</label>
