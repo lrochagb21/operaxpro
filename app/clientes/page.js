@@ -342,7 +342,7 @@ export default function Clientes() {
               ):null)}
             </div>
             {modal.logradouro&&(
-              
+              <a
                 href={'https://maps.google.com/?q='+encodeURIComponent((modal.logradouro||'')+' '+(modal.numero||'')+', '+(modal.bairro||'')+', '+(modal.cidade||'')+' '+(modal.estado||''))}
                 target="_blank" rel="noreferrer"
                 style={{display:'flex',alignItems:'center',gap:10,padding:'12px 16px',background:'rgba(6,182,212,0.08)',border:'1px solid rgba(6,182,212,0.25)',borderRadius:10,color:'#67E8F9',textDecoration:'none',fontSize:13,fontWeight:600,marginBottom:12}}>
