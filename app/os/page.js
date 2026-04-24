@@ -35,6 +35,7 @@ export default function OS() {
   const [modal, setModal]       = useState(null)
   const [form, setForm]         = useState(empty)
   const [filtroStatus, setFiltroStatus] = useState('')
+  const [tipoView, setTipoView] = useState('todos') // 'todos' | 'OS' | 'ORC'
   const [filtroPrio, setFiltroPrio]     = useState('')
   const [search, setSearch]             = useState('')
 
@@ -141,6 +142,7 @@ export default function OS() {
   function f(k,v) { setForm(p=>({...p,[k]:v})) }
 
   const filtered = list.filter(o => {
+    const matchTipo   = tipoView === 'todos' || o.tipo === tipoView
     const matchStatus = !filtroStatus || o.status === filtroStatus
     const matchPrio   = !filtroPrio   || o.prioridade === filtroPrio
     const matchSearch = !search || 
@@ -148,7 +150,7 @@ export default function OS() {
       o.usuarios?.nome?.toLowerCase().includes(search.toLowerCase()) ||
       o.tipo_servico?.toLowerCase().includes(search.toLowerCase()) ||
       String(o.id).includes(search)
-    return matchStatus && matchPrio && matchSearch
+    return matchTipo && matchStatus && matchPrio && matchSearch
   })
 
   const totais = {
@@ -156,6 +158,15 @@ export default function OS() {
     andamento: list.filter(o=>o.status==='Em Andamento').length,
     concluida: list.filter(o=>o.status==='Concluída').length,
     urgente:   list.filter(o=>o.prioridade==='Urgente').length,
+    os:        list.filter(o=>o.tipo==='OS').length,
+    orc:       list.filter(o=>o.tipo==='ORC').length,
+  }
+
+  async function aprovarOrc(o) {
+    if (!confirm('Aprovar este orcamento e converter em Ordem de Servico?')) return
+    const { error } = await supabase.from('ordens_servico').update({tipo:'OS', status:'Aberta'}).eq('id',o.id)
+    if (error) showMsg('Erro: '+error.message,'err')
+    else { showMsg('Orcamento aprovado e convertido em OS!','ok'); loadAll(); setModal(null) }
   }
 
   const fmtVal = v => v ? 'R$ '+parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—'
@@ -319,6 +330,22 @@ export default function OS() {
         {/* LISTA */}
         {tab==='lista'&&(
           <div>
+            {/* Tabs tipo */}
+            <div style={{display:'flex',gap:8,marginBottom:14}}>
+              {[
+                {v:'todos',l:'Todos',c:list.length},
+                {v:'OS',l:'Ordens de Servico',c:totais.os},
+                {v:'ORC',l:'Orcamentos',c:totais.orc},
+              ].map(({v,l,c})=>(
+                <button key={v} onClick={()=>setTipoView(v)} style={{
+                  padding:'8px 18px',borderRadius:10,fontSize:13,fontWeight:700,cursor:'pointer',border:'none',
+                  background:tipoView===v?(v==='ORC'?'#8B5CF6':'#1A56DB'):'#162040',
+                  color:tipoView===v?'#fff':'#8899BB',
+                }}>
+                  {l} <span style={{background:'rgba(255,255,255,0.15)',borderRadius:20,padding:'1px 8px',fontSize:11,marginLeft:4}}>{c}</span>
+                </button>
+              ))}
+            </div>
             {/* Filtros */}
             <div style={{background:'#0F1729',border:'1px solid rgba(96,165,250,0.07)',borderRadius:16,padding:16,marginBottom:16,display:'flex',gap:10,flexWrap:'wrap',alignItems:'center'}}>
               <input placeholder="Buscar por cliente, tecnico, servico ou #OS..." value={search} onChange={e=>setSearch(e.target.value)}
@@ -466,7 +493,10 @@ export default function OS() {
             </div>
 
             <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-              <button onClick={()=>{editOS(modal);setModal(null)}} style={{flex:1,padding:'11px',borderRadius:10,background:'rgba(26,86,219,.15)',border:'1px solid rgba(26,86,219,.3)',color:'#60A5FA',fontSize:13,fontWeight:700,cursor:'pointer'}}>Editar OS</button>
+              {modal.tipo==='ORC' && (
+                <button onClick={()=>aprovarOrc(modal)} style={{flex:1,padding:'11px',borderRadius:10,background:'rgba(16,185,129,.15)',border:'1px solid rgba(16,185,129,.3)',color:'#34D399',fontSize:13,fontWeight:700,cursor:'pointer'}}>✅ Aprovar Orcamento → OS</button>
+              )}
+              <button onClick={()=>{editOS(modal);setModal(null)}} style={{flex:1,padding:'11px',borderRadius:10,background:'rgba(26,86,219,.15)',border:'1px solid rgba(26,86,219,.3)',color:'#60A5FA',fontSize:13,fontWeight:700,cursor:'pointer'}}>Editar</button>
               <button onClick={()=>{
                 const tecnico = modal.usuarios?.nome || 'A definir'
                 const cliente = modal.clientes?.nome || ''
