@@ -345,13 +345,13 @@ export default function Clientes() {
               
                 href={'https://maps.google.com/?q='+encodeURIComponent((modal.logradouro||'')+' '+(modal.numero||'')+', '+(modal.bairro||'')+', '+(modal.cidade||'')+' '+(modal.estado||''))}
                 target="_blank" rel="noreferrer"
-                style={{display:'flex',alignItems:'center',gap:10,padding:'12px 16px',background:'rgba(6,182,212,0.08)',border:'1px solid rgba(6,182,212,0.25)',borderRadius:10,color:'#67E8F9',textDecoration:'none',fontSize:13,fontWeight:600,marginBottom:12,transition:'all .15s'}}>
+                style={{display:'flex',alignItems:'center',gap:10,padding:'12px 16px',background:'rgba(6,182,212,0.08)',border:'1px solid rgba(6,182,212,0.25)',borderRadius:10,color:'#67E8F9',textDecoration:'none',fontSize:13,fontWeight:600,marginBottom:12}}>
                 <span style={{fontSize:18}}>📍</span>
                 <div>
                   <div style={{fontSize:13,fontWeight:700}}>{modal.logradouro}{modal.numero ? ', '+modal.numero : ''}</div>
                   <div style={{fontSize:11,opacity:0.7,marginTop:1}}>{modal.bairro}{modal.cidade ? ' - '+modal.cidade : ''}{modal.estado ? ' / '+modal.estado : ''}</div>
                 </div>
-                <span style={{marginLeft:'auto',fontSize:11,opacity:0.7,whiteSpace:'nowrap'}}>Abrir no Maps →</span>
+                <span style={{marginLeft:'auto',fontSize:11,opacity:0.7,whiteSpace:'nowrap'}}>Abrir no Maps</span>
               </a>
             )}
             {modal.referencia&&(
