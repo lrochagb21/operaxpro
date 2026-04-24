@@ -457,9 +457,7 @@ export default function OS() {
                   '*Descricao:*',
                   modal.descricao,
                   '',
-                  modal.pecas ? '*Pecas/Materiais:*
-'+modal.pecas+'
-' : '',
+                  modal.pecas ? '*Pecas/Materiais:* '+modal.pecas : '',
                   '*Valor do Servico:* '+valor,
                   desconto ? '*Desconto:* '+desconto : '',
                   '*Valor Final:* '+valFinal,
