@@ -505,7 +505,7 @@ export default function OS() {
                 const desconto = modal.desconto && parseFloat(modal.desconto) > 0 ? 'R$ '+parseFloat(modal.desconto).toLocaleString('pt-BR',{minimumFractionDigits:2}) : null
                 const valFinal = 'R$ '+(parseFloat(modal.valor||0)-parseFloat(modal.desconto||0)).toLocaleString('pt-BR',{minimumFractionDigits:2})
                 const msg = [
-                  '*OperaxPro — Ordem de Servico #'+modal.id+'*',
+                  '*OperaxPro — '+(modal.tipo==='ORC'?'Orcamento':'Ordem de Servico')+' #'+modal.id+'*',
                   '',
                   '*Cliente:* '+cliente,
                   '*Tipo:* '+modal.tipo_servico || 'Servico geral',
