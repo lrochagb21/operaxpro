@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import AppLayout from '@/components/layout/AppLayout'
+import { useRouter } from 'next/navigation'
 
 function Card({ icon, label, value, change, up, color }) {
   const c = {blue:'#1A56DB',cyan:'#06B6D4',green:'#10B981',yellow:'#F59E0B',purple:'#8B5CF6',red:'#EF4444'}
@@ -17,6 +18,7 @@ function Card({ icon, label, value, change, up, color }) {
 }
 
 export default function Dashboard() {
+  const router = useRouter()
   const [stats, setStats] = useState({tec:0,cli:0,osA:0,osC:0,fat:'R$0',estB:0})
   const [os, setOs] = useState([])
   const [agHoje, setAgHoje] = useState([])
@@ -82,7 +84,7 @@ export default function Dashboard() {
                 const st=a.status||'agendado'
                 const stC={agendado:{bg:'rgba(245,158,11,.15)',c:'#FCD34D'},confirmado:{bg:'rgba(96,165,250,.15)',c:'#93C5FD'},concluido:{bg:'rgba(16,185,129,.15)',c:'#34D399'},cancelado:{bg:'rgba(239,68,68,.15)',c:'#FCA5A5'}}[st]||{bg:'rgba(96,165,250,.15)',c:'#93C5FD'}
                 return(
-                  <div key={a.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',background:'rgba(96,165,250,0.04)',borderRadius:10,border:'1px solid rgba(96,165,250,0.08)'}}>
+                  <div key={a.id} onClick={()=>router.push('/agenda?id='+a.id)} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',background:'rgba(96,165,250,0.04)',borderRadius:10,border:'1px solid rgba(96,165,250,0.08)',cursor:'pointer'}}>
                     <span style={{fontSize:13,fontWeight:800,color:'#60A5FA',minWidth:50}}>{a.hora_inicio?.slice(0,5)||'--:--'}</span>
                     <span style={{fontSize:13,fontWeight:700,color:'#EEF2FF',flex:1}}>{a.clientes?.nome||'—'}</span>
                     <span style={{fontSize:12,color:'#8899BB'}}>{a.usuarios?.nome||'—'}</span>

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import AppLayout from '@/components/layout/AppLayout'
 
@@ -24,7 +25,15 @@ export default function Agenda() {
   const ef = {cliente_id:'',tecnico_id:'',data:'',hora_inicio:'',hora_fim:'',tipo_servico:'',endereco:'',telefone:'',observacoes:'',status:'agendado'}
   const [form,setForm]   = useState(ef)
 
+  const searchParams = useSearchParams()
   useEffect(()=>{ load() },[])
+  useEffect(()=>{
+    const id = searchParams.get('id')
+    if(id && ags.length>0){
+      const ag = ags.find(a=>String(a.id)===String(id))
+      if(ag) setModal(ag)
+    }
+  },[searchParams, ags])
 
   async function load(){
     setLoading(true)
