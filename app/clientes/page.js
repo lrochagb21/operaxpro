@@ -24,7 +24,7 @@ export default function Clientes() {
 
   async function load() {
     setLoading(true)
-    const { data } = await supabase.from('clientes').select('*').order('criado_em',{ascending:false})
+    const { data } = await supabase.from('clientes').select('*').order('nome',{ascending:true})
     setList(data || [])
     setLoading(false)
   }
