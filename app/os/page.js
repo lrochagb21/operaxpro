@@ -6,7 +6,7 @@ import AppLayout from '@/components/layout/AppLayout'
 const STATUS = ['Aberta','Em Andamento','Aguardando Peça','Concluída','Cancelada']
 const PRIORIDADES = ['Normal','Alta','Urgente']
 const SERVICOS = ['Instalação','Manutenção Preventiva','Manutenção Corretiva','Reparo','Vistoria','Suporte Técnico','Outro']
-const empty = {tipo:'OS',prioridade:'Normal',cliente_id:'',tecnico_id:'',tipo_servico:'',status:'Aberta',valor:'',desconto:'',descricao:'',pecas:'',observacoes:'',data_abertura:'',data_previsao:'',hora_atendimento:''}
+const empty = {tipo:'OS',prioridade:'Normal',cliente_id:'',tecnico_id:'',tipo_servico:'',status:'Aberta',valor:'',desconto:'',descricao:'',pecas:'',observacoes:'',data_abertura:'',data_previsao:'',hora_atendimento:'',tipo_horario:''}
 
 const stBadge = s=>({
   'Aberta':          {bg:'rgba(245,158,11,.15)',  color:'#FCD34D',border:'rgba(245,158,11,.3)'},
@@ -129,7 +129,7 @@ export default function OS() {
   function openForm(item=null) {
     if (item) {
       setEditId(item.id)
-      setForm({tipo:item.tipo||'OS',prioridade:item.prioridade||'Normal',cliente_id:item.cliente_id||'',tecnico_id:item.tecnico_id||'',tipo_servico:item.tipo_servico||'',status:item.status||'Aberta',valor:item.valor||'',desconto:item.desconto||'',descricao:item.descricao||'',pecas:item.pecas||'',observacoes:item.observacoes||'',data_abertura:item.data_abertura||'',data_previsao:item.data_previsao||'',hora_atendimento:item.hora_atendimento||''})
+      setForm({tipo:item.tipo||'OS',prioridade:item.prioridade||'Normal',cliente_id:item.cliente_id||'',tecnico_id:item.tecnico_id||'',tipo_servico:item.tipo_servico||'',status:item.status||'Aberta',valor:item.valor||'',desconto:item.desconto||'',descricao:item.descricao||'',pecas:item.pecas||'',observacoes:item.observacoes||'',data_abertura:item.data_abertura||'',data_previsao:item.data_previsao||'',hora_atendimento:item.hora_atendimento||'',tipo_horario:item.hora_atendimento?item.hora_atendimento.includes('Manhã')||item.hora_atendimento.includes('Tarde')||item.hora_atendimento.includes('Noite')?'periodo':'hora':''})
     } else {
       setEditId(null)
       setForm({...empty, data_abertura:new Date().toISOString().split('T')[0]})
@@ -452,12 +452,42 @@ export default function OS() {
                   <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Data</label>
                   <input type="date" value={form.data_abertura} onChange={e=>f('data_abertura',e.target.value)} style={{background:'#162040',border:'1px solid rgba(96,165,250,0.13)',color:'#EEF2FF',borderRadius:10,padding:'10px 14px',fontSize:14,fontFamily:'inherit',outline:'none',width:'100%'}}/>
                 </div>
-                <div>
-                  <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Hora do Atendimento</label>
-                  <select value={form.hora_atendimento} onChange={e=>f('hora_atendimento',e.target.value)} style={{background:'#162040',border:'1px solid rgba(96,165,250,0.13)',color:'#EEF2FF',borderRadius:10,padding:'10px 14px',fontSize:14,fontFamily:'inherit',outline:'none',width:'100%',appearance:'none',cursor:'pointer'}}>
-                    <option value="">Sem horário</option>
-                    {['06:00','06:30','07:00','07:30','08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00'].map(h=><option key={h} value={h}>{h}</option>)}
-                  </select>
+                <div style={{gridColumn:'1/-1'}}>
+                  <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Horário do Atendimento</label>
+                  <div style={{display:'flex',gap:6,marginBottom:8,background:'#0F1729',borderRadius:10,padding:4}}>
+                    {[{v:'',l:'Sem horário'},{v:'hora',l:'Hora Marcada'},{v:'periodo',l:'Período'}].map(({v,l})=>(
+                      <button key={v} type="button" onClick={()=>{f('hora_atendimento','');f('tipo_horario',v)}}
+                        style={{flex:1,padding:'8px',borderRadius:7,border:'none',cursor:'pointer',fontSize:12,fontWeight:700,
+                          background:(form.tipo_horario||'')=== v?'#1A56DB':'transparent',
+                          color:(form.tipo_horario||'')=== v?'#fff':'#8899BB'}}>
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                  {form.tipo_horario==='hora'&&(
+                    <select value={form.hora_atendimento} onChange={e=>f('hora_atendimento',e.target.value)} style={{background:'#162040',border:'1px solid rgba(26,86,219,0.3)',color:'#EEF2FF',borderRadius:10,padding:'10px 14px',fontSize:14,fontFamily:'inherit',outline:'none',width:'100%',appearance:'none',cursor:'pointer'}}>
+                      <option value="">Selecione o horário...</option>
+                      {['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'].map(h=><option key={h} value={h}>{h}</option>)}
+                    </select>
+                  )}
+                  {form.tipo_horario==='periodo'&&(
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+                      {[
+                        {v:'Manhã (08h-12h)',l:'🌅 Manhã',s:'08h às 12h'},
+                        {v:'Tarde (13h-18h)',l:'☀️ Tarde',s:'13h às 18h'},
+                        {v:'Noite (19h-20h)',l:'🌙 Noite',s:'19h às 20h'},
+                      ].map(({v,l,s})=>(
+                        <button key={v} type="button" onClick={()=>f('hora_atendimento',v)}
+                          style={{padding:'12px 8px',borderRadius:10,border:'none',cursor:'pointer',textAlign:'center',
+                            background:form.hora_atendimento===v?'rgba(26,86,219,0.25)':'#162040',
+                            border:form.hora_atendimento===v?'1px solid rgba(26,86,219,0.5)':'1px solid rgba(96,165,250,0.13)'}}>
+                          <div style={{fontSize:18,marginBottom:4}}>{l.split(' ')[0]}</div>
+                          <div style={{fontSize:12,fontWeight:700,color:form.hora_atendimento===v?'#60A5FA':'#EEF2FF'}}>{l.split(' ')[1]}</div>
+                          <div style={{fontSize:10,color:'#3D5070',marginTop:2}}>{s}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Valor (R$)</label>
