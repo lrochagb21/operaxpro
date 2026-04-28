@@ -23,6 +23,10 @@ export default function TecnicoView() {
   const [tab, setTab]           = useState('hoje')
   const [modalOS, setModalOS]   = useState(null)
   const [modalOrc, setModalOrc] = useState(false)
+  const [modalCli, setModalCli] = useState(false)
+  const [savingCli, setSavingCli] = useState(false)
+  const emptyCli = {nome:'',telefone:'',telefone2:'',documento:'',email:'',cep:'',logradouro:'',numero:'',bairro:'',cidade:'',estado:'',referencia:''}
+  const [formCli, setFormCli] = useState(emptyCli)
   const [saving, setSaving]     = useState(false)
   const [msg, setMsg]           = useState({text:'',type:''})
   const emptyOrc = {cliente_id:'',tipo_servico:'',descricao:'',valor:'',desconto:'',pecas:'',observacoes:'',data_abertura:'',hora_atendimento:''}
@@ -60,6 +64,42 @@ export default function TecnicoView() {
     if(modalOS) setModalOS(p=>({...p,status}))
     const {data:perfil} = await supabase.from('usuarios').select('id').eq('auth_id',(await supabase.auth.getSession()).data.session.user.id).single()
     loadData(perfil.id)
+  }
+
+  async function buscarCep(cep) {
+    const c = cep.replace(/\D/g,'')
+    if (c.length !== 8) return
+    try {
+      const res = await fetch('https://viacep.com.br/ws/'+c+'/json/')
+      const d = await res.json()
+      if (!d.erro) {
+        setFormCli(p=>({...p,logradouro:d.logradouro||p.logradouro,bairro:d.bairro||p.bairro,cidade:d.localidade||p.cidade,estado:d.uf||p.estado,cep:c.replace(/(\d{5})(\d{3})/,'$1-$2')}))
+        showMsg('CEP encontrado!','ok')
+      }
+    } catch(e) {}
+  }
+
+  function handleCep(v) {
+    let c = v.replace(/\D/g,'').slice(0,8)
+    if (c.length > 5) c = c.slice(0,5)+'-'+c.slice(5)
+    setFormCli(p=>({...p,cep:c}))
+    if (c.replace(/\D/g,'').length===8) buscarCep(c)
+  }
+
+  async function criarCliente(e) {
+    e.preventDefault()
+    if (!formCli.nome.trim()) { showMsg('Informe o nome','err'); return }
+    if (!formCli.telefone.trim()) { showMsg('Informe o telefone','err'); return }
+    setSavingCli(true)
+    const {error} = await supabase.from('clientes').insert({...formCli, empresa_id:1})
+    if (error) showMsg('Erro: '+error.message,'err')
+    else {
+      showMsg('Cliente cadastrado com sucesso!','ok')
+      setFormCli(emptyCli)
+      setModalCli(false)
+      loadData(user.id)
+    }
+    setSavingCli(false)
   }
 
   async function criarOrcamento(e) {
@@ -128,6 +168,7 @@ export default function TecnicoView() {
           </div>
         </div>
         <div style={{display:'flex',gap:8}}>
+          <button onClick={()=>setModalCli(true)} style={{padding:'7px 14px',borderRadius:8,background:'rgba(16,185,129,.15)',border:'1px solid rgba(16,185,129,.3)',color:'#34D399',fontSize:12,fontWeight:700,cursor:'pointer'}}>+ Cliente</button>
           <button onClick={()=>setModalOrc(true)} style={{padding:'7px 14px',borderRadius:8,background:'rgba(6,182,212,.15)',border:'1px solid rgba(6,182,212,.3)',color:'#67E8F9',fontSize:12,fontWeight:700,cursor:'pointer'}}>+ Orçamento</button>
           <button onClick={logout} style={{padding:'7px 14px',borderRadius:8,background:'rgba(239,68,68,.12)',border:'1px solid rgba(239,68,68,.25)',color:'#FCA5A5',fontSize:12,fontWeight:600,cursor:'pointer'}}>Sair</button>
         </div>
@@ -358,6 +399,75 @@ export default function TecnicoView() {
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CADASTRO CLIENTE */}
+      {modalCli&&(
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',zIndex:500,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(4px)'}} onClick={()=>setModalCli(false)}>
+          <div style={{background:'#0F1729',border:'1px solid rgba(16,185,129,0.2)',borderRadius:20,padding:24,width:520,maxHeight:'90vh',overflowY:'auto'}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18}}>
+              <span style={{fontSize:16,fontWeight:800,color:'#EEF2FF'}}>Cadastrar Cliente</span>
+              <button onClick={()=>setModalCli(false)} style={{background:'rgba(96,165,250,0.1)',border:'1px solid rgba(96,165,250,0.2)',color:'#8899BB',fontSize:18,cursor:'pointer',borderRadius:8,width:32,height:32,display:'flex',alignItems:'center',justifyContent:'center'}}>x</button>
+            </div>
+            <form onSubmit={criarCliente}>
+              <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                <div>
+                  <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Nome / Empresa *</label>
+                  <input required placeholder="Maria Santos" value={formCli.nome} onChange={e=>setFormCli(p=>({...p,nome:e.target.value}))} style={{background:'#162040',border:'1px solid rgba(96,165,250,0.13)',color:'#EEF2FF',borderRadius:10,padding:'10px 14px',fontSize:14,fontFamily:'inherit',outline:'none',width:'100%'}}/>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                  <div>
+                    <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Telefone *</label>
+                    <input required placeholder="(11) 99999-9999" value={formCli.telefone} onChange={e=>setFormCli(p=>({...p,telefone:e.target.value}))} style={{background:'#162040',border:'1px solid rgba(96,165,250,0.13)',color:'#EEF2FF',borderRadius:10,padding:'10px 14px',fontSize:14,fontFamily:'inherit',outline:'none',width:'100%'}}/>
+                  </div>
+                  <div>
+                    <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>CPF / CNPJ</label>
+                    <input placeholder="000.000.000-00" value={formCli.documento} onChange={e=>setFormCli(p=>({...p,documento:e.target.value}))} style={{background:'#162040',border:'1px solid rgba(96,165,250,0.13)',color:'#EEF2FF',borderRadius:10,padding:'10px 14px',fontSize:14,fontFamily:'inherit',outline:'none',width:'100%'}}/>
+                  </div>
+                </div>
+                <div>
+                  <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>E-mail</label>
+                  <input type="email" placeholder="cliente@email.com" value={formCli.email} onChange={e=>setFormCli(p=>({...p,email:e.target.value}))} style={{background:'#162040',border:'1px solid rgba(96,165,250,0.13)',color:'#EEF2FF',borderRadius:10,padding:'10px 14px',fontSize:14,fontFamily:'inherit',outline:'none',width:'100%'}}/>
+                </div>
+                <div style={{background:'rgba(6,182,212,0.05)',border:'1px solid rgba(6,182,212,0.15)',borderRadius:12,padding:14}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'#67E8F9',letterSpacing:'1px',textTransform:'uppercase',marginBottom:12}}>Endereço — CEP preenche automaticamente</div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                    <div>
+                      <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>CEP</label>
+                      <input placeholder="00000-000" value={formCli.cep} onChange={e=>handleCep(e.target.value)} maxLength={9} style={{background:'#162040',border:'1px solid rgba(6,182,212,0.2)',color:'#EEF2FF',borderRadius:10,padding:'10px 14px',fontSize:14,fontFamily:'inherit',outline:'none',width:'100%'}}/>
+                    </div>
+                    <div>
+                      <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Número</label>
+                      <input placeholder="123" value={formCli.numero} onChange={e=>setFormCli(p=>({...p,numero:e.target.value}))} style={{background:'#162040',border:'1px solid rgba(96,165,250,0.13)',color:'#EEF2FF',borderRadius:10,padding:'10px 14px',fontSize:14,fontFamily:'inherit',outline:'none',width:'100%'}}/>
+                    </div>
+                    <div style={{gridColumn:'1/-1'}}>
+                      <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Logradouro</label>
+                      <input placeholder="Rua, Avenida..." value={formCli.logradouro} onChange={e=>setFormCli(p=>({...p,logradouro:e.target.value}))} style={{background:'#162040',border:'1px solid rgba(96,165,250,0.13)',color:'#EEF2FF',borderRadius:10,padding:'10px 14px',fontSize:14,fontFamily:'inherit',outline:'none',width:'100%'}}/>
+                    </div>
+                    <div>
+                      <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Bairro</label>
+                      <input placeholder="Bairro" value={formCli.bairro} onChange={e=>setFormCli(p=>({...p,bairro:e.target.value}))} style={{background:'#162040',border:'1px solid rgba(96,165,250,0.13)',color:'#EEF2FF',borderRadius:10,padding:'10px 14px',fontSize:14,fontFamily:'inherit',outline:'none',width:'100%'}}/>
+                    </div>
+                    <div>
+                      <label style={{display:'block',fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Cidade</label>
+                      <input placeholder="São Paulo" value={formCli.cidade} onChange={e=>setFormCli(p=>({...p,cidade:e.target.value}))} style={{background:'#162040',border:'1px solid rgba(96,165,250,0.13)',color:'#EEF2FF',borderRadius:10,padding:'10px 14px',fontSize:14,fontFamily:'inherit',outline:'none',width:'100%'}}/>
+                    </div>
+                  </div>
+                  <div style={{marginTop:10}}>
+                    <label style={{display:'block',fontSize:10,fontWeight:700,color:'#67E8F9',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:6}}>Ponto de Referência</label>
+                    <input placeholder="Próximo ao mercado X, portão azul..." value={formCli.referencia} onChange={e=>setFormCli(p=>({...p,referencia:e.target.value}))} style={{background:'#162040',border:'1px solid rgba(6,182,212,0.2)',color:'#EEF2FF',borderRadius:10,padding:'10px 14px',fontSize:14,fontFamily:'inherit',outline:'none',width:'100%'}}/>
+                  </div>
+                </div>
+              </div>
+              <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:16}}>
+                <button type="button" onClick={()=>setModalCli(false)} style={{padding:'10px 20px',borderRadius:10,background:'#162040',border:'1px solid rgba(96,165,250,0.13)',color:'#8899BB',fontSize:13,fontWeight:600,cursor:'pointer'}}>Cancelar</button>
+                <button type="submit" disabled={savingCli} style={{padding:'10px 24px',borderRadius:10,background:'#10B981',border:'none',color:'#fff',fontSize:13,fontWeight:800,cursor:'pointer',opacity:savingCli?0.6:1}}>
+                  {savingCli?'Salvando...':'Salvar Cliente'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
