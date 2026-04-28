@@ -9,7 +9,6 @@ export async function POST(request) {
   try {
     const { nome, email, senha, telefone, especialidade, endereco, cidade, status } = await request.json()
 
-    // 1. Criar usuario no Supabase Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: senha,
@@ -20,7 +19,6 @@ export async function POST(request) {
       return Response.json({ error: authError.message }, { status: 400 })
     }
 
-    // 2. Salvar na tabela usuarios com auth_id vinculado
     const { error: dbError } = await supabaseAdmin.from('usuarios').insert({
       empresa_id: 1,
       nome,
@@ -35,12 +33,11 @@ export async function POST(request) {
     })
 
     if (dbError) {
-      // Reverter criacao do auth se falhar no banco
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
       return Response.json({ error: dbError.message }, { status: 400 })
     }
 
-    return Response.json({ success: true, message: 'Tecnico criado com sucesso!' })
+    return Response.json({ success: true })
 
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 })
