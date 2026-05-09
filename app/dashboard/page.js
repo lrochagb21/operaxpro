@@ -156,16 +156,12 @@ export default function Dashboard() {
               </div>
             </div>
             <div style={{padding:16}}>
-              <div style={{borderRadius:12,overflow:'hidden',height:350,position:'relative'}}>
+              <div style={{borderRadius:12,overflow:'hidden',height:350,position:'relative',background:'#162040',display:'flex',alignItems:'center',justifyContent:'center'}}>
                 <iframe
-                  src={'https://www.openstreetmap.org/export/embed.html?bbox='+
-                    (Math.min(...localizacoes.map(l=>parseFloat(l.longitude)))-0.05)+','+
-                    (Math.min(...localizacoes.map(l=>parseFloat(l.latitude)))-0.05)+','+
-                    (Math.max(...localizacoes.map(l=>parseFloat(l.longitude)))+0.05)+','+
-                    (Math.max(...localizacoes.map(l=>parseFloat(l.latitude)))+0.05)+
-                    '&layer=mapnik&marker='+localizacoes[0]?.latitude+','+localizacoes[0]?.longitude
-                  }
-                  style={{width:'100%',height:'100%',border:'none'}}
+                  src={'https://maps.google.com/maps?q='+localizacoes.map(l=>l.latitude+','+l.longitude).join('|')+'&t=m&z=13&ie=UTF8&iwloc=&output=embed'}
+                  style={{width:'100%',height:'100%',border:'none',borderRadius:12}}
+                  allowFullScreen
+                  loading="lazy"
                 />
               </div>
               <div style={{display:'flex',gap:10,flexWrap:'wrap',marginTop:14}}>
