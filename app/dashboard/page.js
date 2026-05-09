@@ -100,7 +100,6 @@ function MapaTecnicos({ localizacoes, apiKey }) {
   )
 }
 
-
 export default function Dashboard() {
   const [stats, setStats]       = useState({tec:0,cli:0,osA:0,osC:0,fat:'R$0',estB:0})
   const [os, setOs]             = useState([])
@@ -134,7 +133,6 @@ export default function Dashboard() {
     setOs(o.data||[])
     setAgendaHoje(ags.data||[])
     setOsConcTec(osConc.data||[])
-      console.log('LOCS:', locs.data, locs.error)
       setLocalizacoes(locs.data||[])
     setLoading(false)
   }

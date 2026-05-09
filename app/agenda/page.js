@@ -9,7 +9,6 @@ const DSEM  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab']
 const stBadge = s=>({agendado:{bg:'rgba(245,158,11,.15)',color:'#FCD34D'},confirmado:{bg:'rgba(96,165,250,.15)',color:'#93C5FD'},concluido:{bg:'rgba(16,185,129,.15)',color:'#34D399'},cancelado:{bg:'rgba(239,68,68,.15)',color:'#FCA5A5'}}[s]||{bg:'rgba(96,165,250,.15)',color:'#93C5FD'})
 const S = {background:'#162040',border:'1px solid rgba(96,165,250,0.13)',color:'#EEF2FF',borderRadius:10,padding:'10px 14px',fontSize:14,fontFamily:'inherit',outline:'none',width:'100%'}
 
-
 function AgendaInner() {
   const now = new Date()
   const [ano,setAno]     = useState(now.getFullYear())
