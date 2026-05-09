@@ -61,7 +61,7 @@ function MapaTecnicos({ localizacoes, apiKey }) {
       const marker = new window.google.maps.Marker({
         position: { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) },
         map: mapObjRef.current,
-        title: loc.nome || 'Tecnico',
+        title: loc.usuarios?.nome || 'Tecnico',
         icon: {
           path: window.google.maps.SymbolPath.CIRCLE,
           scale: 12,
@@ -72,7 +72,7 @@ function MapaTecnicos({ localizacoes, apiKey }) {
         }
       })
       const info = new window.google.maps.InfoWindow({
-        content: '<div style="color:#000;font-family:sans-serif;padding:4px"><strong>'+(loc.nome||'Tecnico')+'</strong><br><small>'+(mins<1?'Agora mesmo':mins+' min atras')+'</small></div>'
+        content: '<div style="color:#000;font-family:sans-serif;padding:4px"><strong>'+(loc.usuarios?.nome||'Tecnico')+'</strong><br><small>'+(mins<1?'Agora mesmo':mins+' min atras')+'</small></div>'
       })
       marker.addListener('click', () => info.open(mapObjRef.current, marker))
       markersRef.current.push(marker)
@@ -105,7 +105,7 @@ export default function Dashboard() {
       supabase.from('financeiro').select('valor').eq('tipo','receita'),
       supabase.from('agenda').select('*,clientes(nome,telefone),usuarios(nome)').eq('data',hoje).order('hora_inicio'),
       supabase.from('ordens_servico').select('tecnico_id,usuarios(nome)').eq('status','Concluída'),
-        supabase.from('localizacoes').select('*').order('atualizado_em',{ascending:false}),
+        supabase.from('localizacoes').select('*, usuarios!localizacoes_tecnico_id_fkey(nome)').order('atualizado_em',{ascending:false}),
     ])
     const fat = f.data?.reduce((a,x)=>a+parseFloat(x.valor),0)||0
     setStats({
@@ -244,7 +244,7 @@ export default function Dashboard() {
                       style={{display:'flex',alignItems:'center',gap:8,padding:'8px 14px',background:'rgba(96,165,250,0.06)',border:'1px solid rgba(96,165,250,0.12)',borderRadius:10,textDecoration:'none',cursor:'pointer'}}>
                       <div style={{width:8,height:8,borderRadius:'50%',background:online?'#10B981':'#F59E0B',boxShadow:online?'0 0 6px #10B981':'none',flexShrink:0}}/>
                       <div>
-                        <div style={{fontSize:13,fontWeight:700,color:'#EEF2FF'}}>{'Tecnico'}</div>
+                        <div style={{fontSize:13,fontWeight:700,color:'#EEF2FF'}}>{loc.usuarios?.nome||'Tecnico'}</div>
                         <div style={{fontSize:10,color:'#3D5070'}}>{online?'Agora mesmo':mins+' min atras'} • Ver no Maps</div>
                       </div>
                     </a>
