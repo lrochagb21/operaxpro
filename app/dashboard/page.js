@@ -86,7 +86,7 @@ function MapaTecnicos({ localizacoes, apiKey }) {
     }
   }, [JSON.stringify(localizacoes)])
 
-  return <div ref={mapRef} style={{width:'100%',height:'100%',borderRadius:12}}/>
+  return <div ref={mapRef} style={{width:'100%',height:'380px',borderRadius:12,background:'#162040'}}/>
 }
 
 export default function Dashboard() {
