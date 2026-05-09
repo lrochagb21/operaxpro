@@ -77,22 +77,16 @@ function MapaTecnicos({ localizacoes, apiKey }) {
       marker.addListener('click', () => info.open(mapObjRef.current, marker))
       markersRef.current.push(marker)
     })
-    // Ajustar zoom para mostrar todos os tecnicos
-    if (localizacoes.length === 1) {
-      mapObjRef.current.setCenter({ lat: parseFloat(localizacoes[0].latitude), lng: parseFloat(localizacoes[0].longitude) })
-      mapObjRef.current.setZoom(15)
-    } else {
-      const bounds = new window.google.maps.LatLngBounds()
-      localizacoes.forEach(loc => {
-        bounds.extend({ lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) })
-      })
-      mapObjRef.current.fitBounds(bounds)
-      // Nao deixar zoom muito alto
-      const listener = window.google.maps.event.addListener(mapObjRef.current, 'idle', () => {
-        if (mapObjRef.current.getZoom() > 15) mapObjRef.current.setZoom(15)
-        window.google.maps.event.removeListener(listener)
-      })
-    }
+    // Ajustar bounds para mostrar todos os tecnicos
+    const bounds = new window.google.maps.LatLngBounds()
+    localizacoes.forEach(loc => {
+      bounds.extend({ lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) })
+    })
+    mapObjRef.current.fitBounds(bounds, {top:40,right:40,bottom:40,left:40})
+    setTimeout(() => {
+      if (mapObjRef.current.getZoom() > 16) mapObjRef.current.setZoom(16)
+      if (mapObjRef.current.getZoom() < 10) mapObjRef.current.setZoom(13)
+    }, 500)
   }
 
   return <div ref={mapRef} style={{width:'100%',height:'100%'}}/>
