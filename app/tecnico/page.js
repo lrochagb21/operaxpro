@@ -40,22 +40,44 @@ export default function TecnicoView() {
   useEffect(() => {
     if (!user) return
     let interval = null
-    function enviarLoc() {
-      if (!navigator.geolocation) return
-      navigator.geolocation.getCurrentPosition(async pos => {
-        await supabase.from('localizacoes').upsert({
-          tecnico_id: user.id,
-          empresa_id: 1,
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          precisao: pos.coords.accuracy,
-          atualizado_em: new Date().toISOString(),
-        }, {onConflict: 'tecnico_id'})
-      }, err => console.log('GPS erro:', err), {enableHighAccuracy: true})
+
+    async function enviarLoc(pos) {
+      await supabase.from('localizacoes').upsert({
+        tecnico_id: user.id,
+        empresa_id: 1,
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        precisao: pos.coords.accuracy,
+        atualizado_em: new Date().toISOString(),
+      }, {onConflict: 'tecnico_id'})
+      setGpsAtivo(true)
     }
-    enviarLoc()
-    interval = setInterval(enviarLoc, 30000)
-    return () => clearInterval(interval)
+
+    function iniciarGPS() {
+      if (!navigator.geolocation) return
+      // Pedir permissao imediatamente ao abrir
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          enviarLoc(pos)
+          // Atualizar a cada 30 segundos
+          interval = setInterval(() => {
+            navigator.geolocation.getCurrentPosition(
+              enviarLoc,
+              err => setGpsAtivo(false),
+              {enableHighAccuracy: true, timeout: 10000}
+            )
+          }, 30000)
+        },
+        err => {
+          setGpsErro('Para usar o sistema, permita o acesso a localizacao nas configuracoes do navegador')
+          setGpsAtivo(false)
+        },
+        {enableHighAccuracy: true, timeout: 15000}
+      )
+    }
+
+    iniciarGPS()
+    return () => { if(interval) clearInterval(interval) }
   }, [user])
 
   async function checkAuth() {
