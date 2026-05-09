@@ -70,53 +70,9 @@ function MapaTecnicos({ localizacoes, apiKey }) {
         return
       }
 
-      // Fallback: Leaflet + OpenStreetMap
-      if (!document.querySelector('link[href*="leaflet"]')) {
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-        document.head.appendChild(link)
-      }
+      // Fallback removido - usando apenas Google Maps
 
-      function initLeaflet(L) {
-        const map = L.map(mapRef.current).setView([clat,clng], localizacoes.length===1?15:12)
-        mapObjRef.current = map
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map)
-
-        const markers = localizacoes.map(loc => {
-          const mins = Math.floor((Date.now()-new Date(loc.atualizado_em).getTime())/60000)
-          const online = mins < 2
-          const nome = loc.usuarios?.nome||'Tecnico'
-          const icon = L.divIcon({
-            className: '',
-            html: '<div style="position:relative;text-align:center">'+
-              '<div style="background:'+(online?'#10B981':'#F59E0B')+';width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px '+(online?'#10B981':'#F59E0B')+'"></div>'+
-              '<div style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:bold;white-space:nowrap">'+nome+'</div>'+
-              '</div>',
-            iconSize: [120,48],
-            iconAnchor: [60,48]
-          })
-          return L.marker([parseFloat(loc.latitude), parseFloat(loc.longitude)], {icon})
-            .addTo(map)
-            .bindPopup('<b>'+nome+'</b><br><small>'+(mins<1?'Agora mesmo':mins+' min atras')+'</small>')
-        })
-
-        if (localizacoes.length > 1) {
-          map.fitBounds(L.featureGroup(markers).getBounds().pad(0.3))
-        }
-      }
-
-      if (window.L) initLeaflet(window.L)
-      else {
-        const s = document.createElement('script')
-        s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-        s.onload = () => initLeaflet(window.L)
-        document.head.appendChild(s)
-      }
-    }
-
-    // Tentar carregar Google Maps primeiro
+        // Tentar carregar Google Maps primeiro
     if (window.google && window.google.maps) {
       initMap()
     } else if (!document.querySelector('script[src*="maps.googleapis"]')) {
