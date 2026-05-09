@@ -94,8 +94,8 @@ function MapaTecnicos({ localizacoes, apiKey }) {
               '<div style="background:'+(online?'#10B981':'#F59E0B')+';width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px '+(online?'#10B981':'#F59E0B')+'"></div>'+
               '<div style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:bold;white-space:nowrap">'+nome+'</div>'+
               '</div>',
-            iconSize: [16,36],
-            iconAnchor: [8,36]
+            iconSize: [120,48],
+            iconAnchor: [60,48]
           })
           return L.marker([parseFloat(loc.latitude), parseFloat(loc.longitude)], {icon})
             .addTo(map)
