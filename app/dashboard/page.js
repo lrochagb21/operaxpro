@@ -18,28 +18,34 @@ function Card({ icon, label, value, change, up, color }) {
 }
 
 function MapaTecnicos({ localizacoes, apiKey }) {
-  const markers = localizacoes.map(l=>'color:red|label:T|'+l.latitude+','+l.longitude).join('&markers=')
-  const center = localizacoes.length===1
-    ? localizacoes[0].latitude+','+localizacoes[0].longitude
-    : ((parseFloat(localizacoes[0].latitude)+parseFloat(localizacoes[localizacoes.length-1].latitude))/2)+','+
-      ((parseFloat(localizacoes[0].longitude)+parseFloat(localizacoes[localizacoes.length-1].longitude))/2)
+  const [mapaUrl, setMapaUrl] = React.useState('')
+
+  React.useEffect(() => {
+    if (!localizacoes.length) return
+    const markers = localizacoes.map(l=>'color:0x1A56DB|label:T|'+l.latitude+','+l.longitude).join('&markers=')
+    const lats = localizacoes.map(l=>parseFloat(l.latitude))
+    const lngs = localizacoes.map(l=>parseFloat(l.longitude))
+    const clat = (Math.min(...lats)+Math.max(...lats))/2
+    const clng = (Math.min(...lngs)+Math.max(...lngs))/2
+    const url = 'https://maps.googleapis.com/maps/api/staticmap?center='+clat+','+clng+'&zoom='+(localizacoes.length===1?15:12)+'&size=900x400&scale=2&maptype=roadmap&style=feature:all|element:geometry|color:0x1a2035&style=feature:road|element:geometry|color:0x162040&style=feature:water|color:0x0B1120&markers=size:mid|'+markers+'&key='+apiKey
+    setMapaUrl(url)
+  }, [localizacoes])
 
   return (
-    <div style={{width:'100%',height:'380px',borderRadius:12,overflow:'hidden',position:'relative'}}>
-      <img
-        src={'https://maps.googleapis.com/maps/api/staticmap?center='+center+'&zoom=13&size=800x380&scale=2&maptype=roadmap&markers='+markers+'&key='+apiKey}
-        style={{width:'100%',height:'100%',objectFit:'cover'}}
-        alt="Mapa tecnicos"
-      />
-      <div style={{position:'absolute',bottom:8,left:8,display:'flex',flexDirection:'column',gap:4}}>
+    <div style={{width:'100%',height:'380px',borderRadius:12,overflow:'hidden',position:'relative',background:'#162040'}}>
+      {mapaUrl && <img src={mapaUrl} style={{width:'100%',height:'100%',objectFit:'cover'}} alt="Mapa"/>}
+      <div style={{position:'absolute',bottom:10,left:10,display:'flex',flexDirection:'column',gap:5}}>
         {localizacoes.map((loc,i)=>{
           const mins = Math.floor((Date.now()-new Date(loc.atualizado_em).getTime())/60000)
+          const online = mins < 2
           return(
-            <a key={i} href={'https://maps.google.com/?q='+loc.latitude+','+loc.longitude} target="_blank" rel="noreferrer"
-              style={{display:'flex',alignItems:'center',gap:6,padding:'5px 10px',background:'rgba(0,0,0,0.75)',borderRadius:8,textDecoration:'none'}}>
-              <div style={{width:8,height:8,borderRadius:'50%',background:mins<2?'#10B981':'#F59E0B'}}/>
-              <span style={{fontSize:12,fontWeight:700,color:'#fff'}}>{loc.usuarios?.nome||'Tecnico'}</span>
-              <span style={{fontSize:10,color:'#aaa'}}>{mins<1?'agora':mins+'min'}</span>
+            <a key={i}
+              href={'https://maps.google.com/?q='+loc.latitude+','+loc.longitude}
+              target="_blank" rel="noreferrer"
+              style={{display:'flex',alignItems:'center',gap:8,padding:'7px 12px',background:'rgba(11,17,32,0.9)',borderRadius:10,textDecoration:'none',border:'1px solid rgba(96,165,250,0.2)'}}>
+              <div style={{width:8,height:8,borderRadius:'50%',background:online?'#10B981':'#F59E0B',boxShadow:online?'0 0 6px #10B981':'none'}}/>
+              <span style={{fontSize:13,fontWeight:700,color:'#EEF2FF'}}>{loc.usuarios?.nome||'Tecnico'}</span>
+              <span style={{fontSize:10,color:'#3D5070',marginLeft:4}}>{mins<1?'agora mesmo':mins+' min atras'} • Ver no Maps</span>
             </a>
           )
         })}
