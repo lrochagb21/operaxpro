@@ -42,17 +42,22 @@ function MapaTecnicos({ localizacoes, apiKey }) {
         const online = mins < 2
         const nome = loc.usuarios?.nome || 'Tecnico'
 
+        const svgIcon = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="50">' +
+          '<rect x="0" y="0" width="120" height="26" rx="6" fill="rgba(0,0,0,0.85)" stroke="'+(online?'#10B981':'#F59E0B')+'" stroke-width="1.5"/>' +
+          '<text x="60" y="18" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="bold" fill="white">'+nome+'</text>' +
+          '<line x1="60" y1="26" x2="60" y2="38" stroke="'+(online?'#10B981':'#F59E0B')+'" stroke-width="2"/>' +
+          '<circle cx="60" cy="44" r="6" fill="'+(online?'#10B981':'#F59E0B')+'" stroke="white" stroke-width="2"/>' +
+          '</svg>'
+        )
+
         new G.Marker({
           position: {lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude)},
           map,
-          label: {text: nome, color: '#ffffff', fontSize: '12px', fontWeight: 'bold'},
           icon: {
-            path: G.SymbolPath.CIRCLE,
-            scale: 14,
-            fillColor: online ? '#10B981' : '#F59E0B',
-            fillOpacity: 1,
-            strokeColor: '#ffffff',
-            strokeWeight: 2,
+            url: svgIcon,
+            scaledSize: new G.Size(120, 50),
+            anchor: new G.Point(60, 50),
           }
         })
       })
