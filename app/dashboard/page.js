@@ -19,84 +19,74 @@ function Card({ icon, label, value, change, up, color }) {
 
 function MapaTecnicos({ localizacoes, apiKey }) {
   const mapRef = React.useRef(null)
-  const mapObjRef = React.useRef(null)
-  const markersRef = React.useRef([])
 
   React.useEffect(() => {
-    if (!localizacoes.length) return
-    if (window.google && window.google.maps) {
-      initMap()
-      return
-    }
-    if (document.querySelector('script[src*="maps.googleapis"]')) {
-      const check = setInterval(() => {
-        if (window.google && window.google.maps) { clearInterval(check); initMap() }
-      }, 100)
-      return
-    }
-    const script = document.createElement('script')
-    script.src = 'https://maps.googleapis.com/maps/api/js?key='+apiKey
-    script.async = true
-    script.onload = () => setTimeout(initMap, 100)
-    document.head.appendChild(script)
-  }, [localizacoes])
+    if (!localizacoes.length || !mapRef.current) return
 
-  function initMap() {
-    if (!mapRef.current || !window.google) return
-    const center = { lat: parseFloat(localizacoes[0].latitude), lng: parseFloat(localizacoes[0].longitude) }
-    if (!mapObjRef.current || !mapObjRef.current.getCenter) {
-      mapObjRef.current = new window.google.maps.Map(mapRef.current, {
-        center, zoom: 13,
+    function renderMap() {
+      const google = window.google
+      if (!google) return
+
+      // Calcular centro
+      const lats = localizacoes.map(l=>parseFloat(l.latitude))
+      const lngs = localizacoes.map(l=>parseFloat(l.longitude))
+      const centerLat = (Math.min(...lats)+Math.max(...lats))/2
+      const centerLng = (Math.min(...lngs)+Math.max(...lngs))/2
+
+      const map = new google.maps.Map(mapRef.current, {
+        center: {lat: centerLat, lng: centerLng},
+        zoom: localizacoes.length===1 ? 15 : 12,
         styles: [
           {elementType:'geometry',stylers:[{color:'#1a2035'}]},
-          {elementType:'labels.text.stroke',stylers:[{color:'#0F1729'}]},
           {elementType:'labels.text.fill',stylers:[{color:'#8899BB'}]},
           {featureType:'road',elementType:'geometry',stylers:[{color:'#162040'}]},
-          {featureType:'road',elementType:'labels.text.fill',stylers:[{color:'#60A5FA'}]},
           {featureType:'water',elementType:'geometry',stylers:[{color:'#0B1120'}]},
           {featureType:'poi',stylers:[{visibility:'off'}]},
         ]
       })
-    }
-    // Limpar marcadores antigos
-    markersRef.current.forEach(m => m.setMap(null))
-    markersRef.current = []
-    // Adicionar marcadores
-    localizacoes.forEach(loc => {
-      const mins = Math.floor((Date.now() - new Date(loc.atualizado_em).getTime()) / 60000)
-      const marker = new window.google.maps.Marker({
-        position: { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) },
-        map: mapObjRef.current,
-        title: loc.usuarios?.nome || 'Tecnico',
-        icon: {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 12,
-          fillColor: mins < 2 ? '#10B981' : '#F59E0B',
-          fillOpacity: 1,
-          strokeColor: '#fff',
-          strokeWeight: 2,
-        }
-      })
-      const info = new window.google.maps.InfoWindow({
-        content: '<div style="color:#000;font-family:sans-serif;padding:4px"><strong>'+(loc.usuarios?.nome||'Tecnico')+'</strong><br><small>'+(mins<1?'Agora mesmo':mins+' min atras')+'</small></div>'
-      })
-      marker.addListener('click', () => info.open(mapObjRef.current, marker))
-      markersRef.current.push(marker)
-    })
-    // Ajustar bounds para mostrar todos os tecnicos
-    console.log('LOCS NO MAPA:', localizacoes)
-    const bounds = new window.google.maps.LatLngBounds()
-    localizacoes.forEach(loc => {
-      bounds.extend({ lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) })
-    })
-    mapObjRef.current.fitBounds(bounds, {top:40,right:40,bottom:40,left:40})
-    setTimeout(() => {
-      if (mapObjRef.current.getZoom() > 16) mapObjRef.current.setZoom(16)
-      if (mapObjRef.current.getZoom() < 10) mapObjRef.current.setZoom(13)
-    }, 500)
-  }
 
-  return <div ref={mapRef} style={{width:'100%',height:'100%'}}/>
+      localizacoes.forEach(loc => {
+        const mins = Math.floor((Date.now()-new Date(loc.atualizado_em).getTime())/60000)
+        const marker = new google.maps.Marker({
+          position: {lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude)},
+          map,
+          title: loc.usuarios?.nome||'Tecnico',
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 12,
+            fillColor: mins<2?'#10B981':'#F59E0B',
+            fillOpacity: 1,
+            strokeColor: '#fff',
+            strokeWeight: 2,
+          }
+        })
+        const info = new google.maps.InfoWindow({
+          content: '<div style="padding:6px;font-family:sans-serif"><b>'+(loc.usuarios?.nome||'Tecnico')+'</b><br><small style="color:#666">'+(mins<1?'Agora mesmo':mins+' min atras')+'</small></div>'
+        })
+        marker.addListener('click', ()=>info.open(map, marker))
+      })
+
+      // Ajustar bounds se mais de 1
+      if (localizacoes.length > 1) {
+        const bounds = new google.maps.LatLngBounds()
+        localizacoes.forEach(l=>bounds.extend({lat:parseFloat(l.latitude),lng:parseFloat(l.longitude)}))
+        map.fitBounds(bounds)
+      }
+    }
+
+    if (window.google && window.google.maps) {
+      renderMap()
+    } else if (!document.querySelector('script[src*="maps.googleapis"]')) {
+      const s = document.createElement('script')
+      s.src = 'https://maps.googleapis.com/maps/api/js?key='+apiKey
+      s.onload = renderMap
+      document.head.appendChild(s)
+    } else {
+      const t = setInterval(()=>{if(window.google){clearInterval(t);renderMap()}},200)
+    }
+  }, [JSON.stringify(localizacoes)])
+
+  return <div ref={mapRef} style={{width:'100%',height:'100%',borderRadius:12}}/>
 }
 
 export default function Dashboard() {
