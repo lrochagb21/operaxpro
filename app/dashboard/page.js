@@ -36,7 +36,7 @@ export default function Dashboard() {
       supabase.from('financeiro').select('valor').eq('tipo','receita'),
       supabase.from('agenda').select('*,clientes(nome,telefone),usuarios(nome)').eq('data',hoje).order('hora_inicio'),
       supabase.from('ordens_servico').select('tecnico_id,usuarios(nome)').eq('status','Concluída'),
-        supabase.from('localizacoes').select('*,usuarios(nome)').order('atualizado_em',{ascending:false}),
+        supabase.from('localizacoes').select('*, usuarios!localizacoes_tecnico_id_fkey(nome)').order('atualizado_em',{ascending:false}),
     ])
     const fat = f.data?.reduce((a,x)=>a+parseFloat(x.valor),0)||0
     setStats({
