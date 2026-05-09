@@ -17,24 +17,81 @@ function Card({ icon, label, value, change, up, color }) {
   )
 }
 
-function MapaTecnicos({ localizacoes, apiKey }) {
-  const [mapaUrl, setMapaUrl] = React.useState('')
+function MapaTecnicos({ localizacoes }) {
+  const mapRef = React.useRef(null)
+  const mapObjRef = React.useRef(null)
+  const markersRef = React.useRef([])
 
   React.useEffect(() => {
-    if (!localizacoes.length) return
-    const markers = localizacoes.map(l=>'color:0x1A56DB|label:T|'+l.latitude+','+l.longitude).join('&markers=')
-    const lats = localizacoes.map(l=>parseFloat(l.latitude))
-    const lngs = localizacoes.map(l=>parseFloat(l.longitude))
-    const clat = (Math.min(...lats)+Math.max(...lats))/2
-    const clng = (Math.min(...lngs)+Math.max(...lngs))/2
-    const url = 'https://maps.googleapis.com/maps/api/staticmap?center='+clat+','+clng+'&zoom='+(localizacoes.length===1?15:12)+'&size=900x400&scale=2&maptype=roadmap&style=feature:all|element:geometry|color:0x1a2035&style=feature:road|element:geometry|color:0x162040&style=feature:water|color:0x0B1120&markers=size:mid|'+markers+'&key='+apiKey
-    setMapaUrl(url)
-  }, [localizacoes])
+    if (!localizacoes.length || !mapRef.current) return
+
+    // Carregar CSS do Leaflet
+    if (!document.querySelector('link[href*="leaflet"]')) {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      document.head.appendChild(link)
+    }
+
+    function initLeaflet(L) {
+      // Destruir mapa anterior se existir
+      if (mapObjRef.current) {
+        mapObjRef.current.remove()
+        mapObjRef.current = null
+      }
+
+      const lats = localizacoes.map(l=>parseFloat(l.latitude))
+      const lngs = localizacoes.map(l=>parseFloat(l.longitude))
+      const clat = (Math.min(...lats)+Math.max(...lats))/2
+      const clng = (Math.min(...lngs)+Math.max(...lngs))/2
+
+      const map = L.map(mapRef.current, {zoomControl:true}).setView([clat,clng], localizacoes.length===1?15:12)
+      mapObjRef.current = map
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: 'OpenStreetMap',
+        maxZoom: 19
+      }).addTo(map)
+
+      localizacoes.forEach(loc => {
+        const mins = Math.floor((Date.now()-new Date(loc.atualizado_em).getTime())/60000)
+        const online = mins < 2
+        const icon = L.divIcon({
+          className: '',
+          html: '<div style="background:'+(online?'#10B981':'#F59E0B')+';width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px '+(online?'#10B981':'#F59E0B')+'"></div>',
+          iconSize: [16,16],
+          iconAnchor: [8,8]
+        })
+        const marker = L.marker([parseFloat(loc.latitude), parseFloat(loc.longitude)], {icon})
+          .addTo(map)
+          .bindPopup('<div style="font-family:sans-serif;min-width:120px"><b>'+(loc.usuarios?.nome||'Tecnico')+'</b><br><small>'+(mins<1?'Agora mesmo':mins+' min atras')+'</small></div>')
+        markersRef.current.push(marker)
+      })
+
+      if (localizacoes.length > 1) {
+        const group = L.featureGroup(markersRef.current)
+        map.fitBounds(group.getBounds().pad(0.2))
+      }
+    }
+
+    if (window.L) {
+      initLeaflet(window.L)
+    } else {
+      const script = document.createElement('script')
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+      script.onload = () => initLeaflet(window.L)
+      document.head.appendChild(script)
+    }
+
+    return () => {
+      if (mapObjRef.current) { mapObjRef.current.remove(); mapObjRef.current = null }
+    }
+  }, [JSON.stringify(localizacoes)])
 
   return (
-    <div style={{width:'100%',height:'380px',borderRadius:12,overflow:'hidden',position:'relative',background:'#162040'}}>
-      {mapaUrl && <img src={mapaUrl} style={{width:'100%',height:'100%',objectFit:'cover'}} alt="Mapa"/>}
-      <div style={{position:'absolute',bottom:10,left:10,display:'flex',flexDirection:'column',gap:5}}>
+    <div style={{width:'100%',height:'380px',borderRadius:12,overflow:'hidden',position:'relative'}}>
+      <div ref={mapRef} style={{width:'100%',height:'100%'}}/>
+      <div style={{position:'absolute',bottom:10,left:10,zIndex:1000,display:'flex',flexDirection:'column',gap:5}}>
         {localizacoes.map((loc,i)=>{
           const mins = Math.floor((Date.now()-new Date(loc.atualizado_em).getTime())/60000)
           const online = mins < 2
