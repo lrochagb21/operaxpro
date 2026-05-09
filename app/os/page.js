@@ -110,7 +110,7 @@ export default function OS() {
           descricao: 'OS #'+id+' - '+(os.tipo_servico||'Servico')+' - '+(os.clientes?.nome||''),
           valor: valorFinal,
           categoria: 'Servico de OS',
-          data: new Date().toISOString().split('T')[0],
+          data_lancamento: new Date().toISOString().split('T')[0],
           os_id: id,
         })
         showMsg('OS concluida e lancada no financeiro!','ok')
