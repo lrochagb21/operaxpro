@@ -49,6 +49,7 @@ export default function Dashboard() {
     setOs(o.data||[])
     setAgendaHoje(ags.data||[])
     setOsConcTec(osConc.data||[])
+      console.log('LOCS:', locs.data, locs.error)
       setLocalizacoes(locs.data||[])
     setLoading(false)
   }
