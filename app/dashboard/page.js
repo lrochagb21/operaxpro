@@ -21,13 +21,14 @@ export default function Dashboard() {
   const [os, setOs]             = useState([])
   const [agendaHoje, setAgendaHoje] = useState([])
   const [osConcTec, setOsConcTec]   = useState([])
+  const [localizacoes, setLocalizacoes] = useState([])
   const [loading, setLoading]   = useState(true)
 
   useEffect(() => { load() }, [])
 
   async function load() {
     const hoje = new Date().toISOString().split('T')[0]
-    const [t,c,o,e,f,ags,osConc] = await Promise.all([
+    const [t,c,o,e,f,ags,osConc,locs] = await Promise.all([
       supabase.from('usuarios').select('id',{count:'exact'}).eq('perfil','tecnico').eq('status','ativo'),
       supabase.from('clientes').select('id',{count:'exact'}),
       supabase.from('ordens_servico').select('*,clientes(nome),usuarios(nome)').order('criado_em',{ascending:false}).limit(6),
@@ -35,6 +36,7 @@ export default function Dashboard() {
       supabase.from('financeiro').select('valor').eq('tipo','receita'),
       supabase.from('agenda').select('*,clientes(nome,telefone),usuarios(nome)').eq('data',hoje).order('hora_inicio'),
       supabase.from('ordens_servico').select('tecnico_id,usuarios(nome)').eq('status','Concluída'),
+        supabase.from('localizacoes').select('*,usuarios(nome)').order('atualizado_em',{ascending:false}),
     ])
     const fat = f.data?.reduce((a,x)=>a+parseFloat(x.valor),0)||0
     setStats({
@@ -47,6 +49,7 @@ export default function Dashboard() {
     setOs(o.data||[])
     setAgendaHoje(ags.data||[])
     setOsConcTec(osConc.data||[])
+      setLocalizacoes(locs.data||[])
     setLoading(false)
   }
 
@@ -134,6 +137,54 @@ export default function Dashboard() {
                   })}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* Mapa de tecnicos em tempo real */}
+        {localizacoes.length>0&&(
+          <div style={{background:'#0F1729',border:'1px solid rgba(96,165,250,0.07)',borderRadius:16,overflow:'hidden',marginBottom:16}}>
+            <div style={{padding:'14px 20px',borderBottom:'1px solid rgba(96,165,250,0.07)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <div>
+                <span style={{fontSize:14,fontWeight:800,color:'#EEF2FF'}}>Tecnicos em Campo</span>
+                <span style={{fontSize:11,color:'#3D5070',marginLeft:8}}>Localizacao em tempo real</span>
+              </div>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <div style={{width:8,height:8,borderRadius:'50%',background:'#10B981',boxShadow:'0 0 6px #10B981'}}/>
+                <span style={{fontSize:11,color:'#34D399',fontWeight:600}}>{localizacoes.length} online</span>
+              </div>
+            </div>
+            <div style={{padding:16}}>
+              <div style={{borderRadius:12,overflow:'hidden',height:350,position:'relative'}}>
+                <iframe
+                  src={'https://www.openstreetmap.org/export/embed.html?bbox='+
+                    (Math.min(...localizacoes.map(l=>parseFloat(l.longitude)))-0.05)+','+
+                    (Math.min(...localizacoes.map(l=>parseFloat(l.latitude)))-0.05)+','+
+                    (Math.max(...localizacoes.map(l=>parseFloat(l.longitude)))+0.05)+','+
+                    (Math.max(...localizacoes.map(l=>parseFloat(l.latitude)))+0.05)+
+                    '&layer=mapnik&marker='+localizacoes[0]?.latitude+','+localizacoes[0]?.longitude
+                  }
+                  style={{width:'100%',height:'100%',border:'none'}}
+                />
+              </div>
+              <div style={{display:'flex',gap:10,flexWrap:'wrap',marginTop:14}}>
+                {localizacoes.map(loc=>{
+                  const mins = Math.floor((Date.now()-new Date(loc.atualizado_em).getTime())/60000)
+                  const online = mins < 2
+                  return(
+                    <a key={loc.tecnico_id}
+                      href={'https://maps.google.com/?q='+loc.latitude+','+loc.longitude}
+                      target="_blank" rel="noreferrer"
+                      style={{display:'flex',alignItems:'center',gap:8,padding:'8px 14px',background:'rgba(96,165,250,0.06)',border:'1px solid rgba(96,165,250,0.12)',borderRadius:10,textDecoration:'none',cursor:'pointer'}}>
+                      <div style={{width:8,height:8,borderRadius:'50%',background:online?'#10B981':'#F59E0B',boxShadow:online?'0 0 6px #10B981':'none',flexShrink:0}}/>
+                      <div>
+                        <div style={{fontSize:13,fontWeight:700,color:'#EEF2FF'}}>{loc.usuarios?.nome||'Tecnico'}</div>
+                        <div style={{fontSize:10,color:'#3D5070'}}>{online?'Agora mesmo':mins+' min atras'} • Ver no Maps</div>
+                      </div>
+                    </a>
+                  )
+                })}
+              </div>
             </div>
           </div>
         )}

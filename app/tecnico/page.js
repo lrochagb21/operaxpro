@@ -35,6 +35,27 @@ export default function TecnicoView() {
 
   useEffect(() => { checkAuth() }, [])
 
+  useEffect(() => {
+    if (!user) return
+    let interval = null
+    function enviarLoc() {
+      if (!navigator.geolocation) return
+      navigator.geolocation.getCurrentPosition(async pos => {
+        await supabase.from('localizacoes').upsert({
+          tecnico_id: user.id,
+          empresa_id: 1,
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          precisao: pos.coords.accuracy,
+          atualizado_em: new Date().toISOString(),
+        }, {onConflict: 'tecnico_id'})
+      }, err => console.log('GPS erro:', err), {enableHighAccuracy: true})
+    }
+    enviarLoc()
+    interval = setInterval(enviarLoc, 30000)
+    return () => clearInterval(interval)
+  }, [user])
+
   async function checkAuth() {
     const { data:{session} } = await supabase.auth.getSession()
     if (!session) { router.push('/login'); return }
