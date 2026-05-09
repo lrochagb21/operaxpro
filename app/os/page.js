@@ -100,7 +100,26 @@ export default function OS() {
 
   async function updateStatus(id, status) {
     await supabase.from('ordens_servico').update({status,...(status==='Concluída'?{data_conclusao:new Date().toISOString().split('T')[0]}:{})}).eq('id',id)
-    showMsg('Status atualizado!','ok')
+    if (status==='Concluída') {
+      const os = list.find(o=>o.id===id)
+      if (os && (parseFloat(os.valor)||0) > 0) {
+        const valorFinal = (parseFloat(os.valor)||0) - (parseFloat(os.desconto)||0)
+        await supabase.from('financeiro').insert({
+          empresa_id: 1,
+          tipo: 'receita',
+          descricao: 'OS #'+id+' - '+(os.tipo_servico||'Servico')+' - '+(os.clientes?.nome||''),
+          valor: valorFinal,
+          categoria: 'Servico de OS',
+          data: new Date().toISOString().split('T')[0],
+          os_id: id,
+        })
+        showMsg('OS concluida e lancada no financeiro!','ok')
+      } else {
+        showMsg('Status atualizado!','ok')
+      }
+    } else {
+      showMsg('Status atualizado!','ok')
+    }
     loadAll()
     if(modal) setModal(p=>({...p,status}))
   }
