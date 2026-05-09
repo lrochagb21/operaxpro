@@ -18,75 +18,34 @@ function Card({ icon, label, value, change, up, color }) {
 }
 
 function MapaTecnicos({ localizacoes, apiKey }) {
-  const mapRef = React.useRef(null)
+  const markers = localizacoes.map(l=>'color:red|label:T|'+l.latitude+','+l.longitude).join('&markers=')
+  const center = localizacoes.length===1
+    ? localizacoes[0].latitude+','+localizacoes[0].longitude
+    : ((parseFloat(localizacoes[0].latitude)+parseFloat(localizacoes[localizacoes.length-1].latitude))/2)+','+
+      ((parseFloat(localizacoes[0].longitude)+parseFloat(localizacoes[localizacoes.length-1].longitude))/2)
 
-  React.useEffect(() => {
-    if (!localizacoes.length || !mapRef.current) return
-
-    function renderMap() {
-      const google = window.google
-      if (!google) return
-
-      // Calcular centro
-      const lats = localizacoes.map(l=>parseFloat(l.latitude))
-      const lngs = localizacoes.map(l=>parseFloat(l.longitude))
-      const centerLat = (Math.min(...lats)+Math.max(...lats))/2
-      const centerLng = (Math.min(...lngs)+Math.max(...lngs))/2
-
-      const map = new google.maps.Map(mapRef.current, {
-        center: {lat: centerLat, lng: centerLng},
-        zoom: localizacoes.length===1 ? 15 : 12,
-        styles: [
-          {elementType:'geometry',stylers:[{color:'#1a2035'}]},
-          {elementType:'labels.text.fill',stylers:[{color:'#8899BB'}]},
-          {featureType:'road',elementType:'geometry',stylers:[{color:'#162040'}]},
-          {featureType:'water',elementType:'geometry',stylers:[{color:'#0B1120'}]},
-          {featureType:'poi',stylers:[{visibility:'off'}]},
-        ]
-      })
-
-      localizacoes.forEach(loc => {
-        const mins = Math.floor((Date.now()-new Date(loc.atualizado_em).getTime())/60000)
-        const marker = new google.maps.Marker({
-          position: {lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude)},
-          map,
-          title: loc.usuarios?.nome||'Tecnico',
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 12,
-            fillColor: mins<2?'#10B981':'#F59E0B',
-            fillOpacity: 1,
-            strokeColor: '#fff',
-            strokeWeight: 2,
-          }
-        })
-        const info = new google.maps.InfoWindow({
-          content: '<div style="padding:6px;font-family:sans-serif"><b>'+(loc.usuarios?.nome||'Tecnico')+'</b><br><small style="color:#666">'+(mins<1?'Agora mesmo':mins+' min atras')+'</small></div>'
-        })
-        marker.addListener('click', ()=>info.open(map, marker))
-      })
-
-      // Ajustar bounds se mais de 1
-      if (localizacoes.length > 1) {
-        const bounds = new google.maps.LatLngBounds()
-        localizacoes.forEach(l=>bounds.extend({lat:parseFloat(l.latitude),lng:parseFloat(l.longitude)}))
-        map.fitBounds(bounds)
-      }
-    }
-
-    if (window.google && window.google.maps) {
-      renderMap()
-    } else if (!document.querySelector('script[src*="maps.googleapis"]')) {
-      const s = document.createElement('script')
-      s.src = 'https://maps.googleapis.com/maps/api/js?key='+apiKey
-      s.onload = renderMap
-      document.head.appendChild(s)
-    } else {
-      const t = setInterval(()=>{if(window.google){clearInterval(t);renderMap()}},200)
-    }
-  }, [JSON.stringify(localizacoes)])
-
-  return <div ref={mapRef} style={{width:'100%',height:'380px',borderRadius:12,background:'#162040'}}/>
+  return (
+    <div style={{width:'100%',height:'380px',borderRadius:12,overflow:'hidden',position:'relative'}}>
+      <img
+        src={'https://maps.googleapis.com/maps/api/staticmap?center='+center+'&zoom=13&size=800x380&scale=2&maptype=roadmap&markers='+markers+'&key='+apiKey}
+        style={{width:'100%',height:'100%',objectFit:'cover'}}
+        alt="Mapa tecnicos"
+      />
+      <div style={{position:'absolute',bottom:8,left:8,display:'flex',flexDirection:'column',gap:4}}>
+        {localizacoes.map((loc,i)=>{
+          const mins = Math.floor((Date.now()-new Date(loc.atualizado_em).getTime())/60000)
+          return(
+            <a key={i} href={'https://maps.google.com/?q='+loc.latitude+','+loc.longitude} target="_blank" rel="noreferrer"
+              style={{display:'flex',alignItems:'center',gap:6,padding:'5px 10px',background:'rgba(0,0,0,0.75)',borderRadius:8,textDecoration:'none'}}>
+              <div style={{width:8,height:8,borderRadius:'50%',background:mins<2?'#10B981':'#F59E0B'}}/>
+              <span style={{fontSize:12,fontWeight:700,color:'#fff'}}>{loc.usuarios?.nome||'Tecnico'}</span>
+              <span style={{fontSize:10,color:'#aaa'}}>{mins<1?'agora':mins+'min'}</span>
+            </a>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 export default function Dashboard() {
