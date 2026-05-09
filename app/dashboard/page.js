@@ -229,13 +229,8 @@ export default function Dashboard() {
               </div>
             </div>
             <div style={{padding:16}}>
-              <div style={{borderRadius:12,overflow:'hidden',height:350,position:'relative',background:'#162040',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <iframe
-                  src={'https://maps.google.com/maps?q='+localizacoes.map(l=>l.latitude+','+l.longitude).join('|')+'&t=m&z=13&ie=UTF8&iwloc=&output=embed'}
-                  style={{width:'100%',height:'100%',border:'none',borderRadius:12}}
-                  allowFullScreen
-                  loading="lazy"
-                />
+              <div style={{borderRadius:12,overflow:'hidden',height:380,position:'relative',background:'#162040'}}>
+                <MapaTecnicos localizacoes={localizacoes} apiKey="AIzaSyDGAeiSsjSPSDQcH8Rxdc3GEJeJrhqj0Mo"/>
               </div>
               <div style={{display:'flex',gap:10,flexWrap:'wrap',marginTop:14}}>
                 {localizacoes.map(loc=>{
