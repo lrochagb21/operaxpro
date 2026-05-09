@@ -24,88 +24,69 @@ function MapaTecnicos({ localizacoes, apiKey }) {
   React.useEffect(() => {
     if (!localizacoes.length || !mapRef.current) return
 
-    function initMap() {
-      if (mapObjRef.current) { mapObjRef.current.remove(); mapObjRef.current = null }
-
+    function initGoogleMap() {
+      const G = window.google.maps
       const lats = localizacoes.map(l=>parseFloat(l.latitude))
       const lngs = localizacoes.map(l=>parseFloat(l.longitude))
       const clat = (Math.min(...lats)+Math.max(...lats))/2
       const clng = (Math.min(...lngs)+Math.max(...lngs))/2
 
-      // Usar Google Maps se disponivel, senao OpenStreetMap
-      if (window.google && window.google.maps) {
-        const map = new window.google.maps.Map(mapRef.current, {
-          center: {lat:clat, lng:clng},
-          zoom: localizacoes.length===1?15:12,
-          mapTypeId: 'roadmap',
+      const map = new G.Map(mapRef.current, {
+        center: {lat:clat, lng:clng},
+        zoom: localizacoes.length===1 ? 15 : 12,
+      })
+      mapObjRef.current = map
+
+      localizacoes.forEach(loc => {
+        const mins = Math.floor((Date.now()-new Date(loc.atualizado_em).getTime())/60000)
+        const online = mins < 2
+        const nome = loc.usuarios?.nome || 'Tecnico'
+
+        new G.Marker({
+          position: {lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude)},
+          map,
+          label: {text: nome, color: '#ffffff', fontSize: '12px', fontWeight: 'bold'},
+          icon: {
+            path: G.SymbolPath.CIRCLE,
+            scale: 14,
+            fillColor: online ? '#10B981' : '#F59E0B',
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 2,
+          }
         })
-        mapObjRef.current = {remove: ()=>{}}
+      })
 
-        localizacoes.forEach(loc => {
-          const mins = Math.floor((Date.now()-new Date(loc.atualizado_em).getTime())/60000)
-          const online = mins < 2
-          const nome = loc.usuarios?.nome||'Tecnico'
-
-          // Label com nome em cima do marcador
-          new window.google.maps.Marker({
-            position: {lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude)},
-            map,
-            label: {text: nome, color: '#fff', fontSize: '11px', fontWeight: 'bold'},
-            icon: {
-              path: window.google.maps.SymbolPath.CIRCLE,
-              scale: 14,
-              fillColor: online?'#10B981':'#F59E0B',
-              fillOpacity: 1,
-              strokeColor: '#fff',
-              strokeWeight: 2,
-            }
-          })
-        })
-
-        if (localizacoes.length > 1) {
-          const bounds = new window.google.maps.LatLngBounds()
-          localizacoes.forEach(l=>bounds.extend({lat:parseFloat(l.latitude),lng:parseFloat(l.longitude)}))
-          map.fitBounds(bounds)
-        }
-        return
+      if (localizacoes.length > 1) {
+        const bounds = new G.LatLngBounds()
+        localizacoes.forEach(l => bounds.extend({lat:parseFloat(l.latitude),lng:parseFloat(l.longitude)}))
+        map.fitBounds(bounds)
       }
-
-      // Fallback removido - usando apenas Google Maps
-
-        // Tentar carregar Google Maps primeiro
-    if (window.google && window.google.maps) {
-      initMap()
-    } else if (!document.querySelector('script[src*="maps.googleapis"]')) {
-      const s = document.createElement('script')
-      s.src = 'https://maps.googleapis.com/maps/api/js?key='+apiKey+'&loading=async'
-      s.onload = () => setTimeout(initMap, 200)
-      s.onerror = initMap // fallback para OpenStreetMap
-      document.head.appendChild(s)
-    } else {
-      initMap()
     }
 
-    return () => {
-      if (mapObjRef.current && mapObjRef.current.remove) mapObjRef.current.remove()
-      mapObjRef.current = null
+    if (window.google && window.google.maps) {
+      initGoogleMap()
+    } else {
+      const s = document.createElement('script')
+      s.src = 'https://maps.googleapis.com/maps/api/js?key='+apiKey
+      s.onload = initGoogleMap
+      document.head.appendChild(s)
     }
   }, [JSON.stringify(localizacoes)])
 
   return (
     <div style={{width:'100%',height:'380px',borderRadius:12,overflow:'hidden',position:'relative'}}>
       <div ref={mapRef} style={{width:'100%',height:'100%'}}/>
-      <div style={{position:'absolute',bottom:10,left:10,zIndex:1000,display:'flex',flexDirection:'column',gap:5}}>
+      <div style={{position:'absolute',bottom:10,left:10,zIndex:10,display:'flex',flexDirection:'column',gap:5}}>
         {localizacoes.map((loc,i)=>{
           const mins = Math.floor((Date.now()-new Date(loc.atualizado_em).getTime())/60000)
           const online = mins < 2
           return(
-            <a key={i}
-              href={'https://maps.google.com/?q='+loc.latitude+','+loc.longitude}
-              target="_blank" rel="noreferrer"
+            <a key={i} href={'https://maps.google.com/?q='+loc.latitude+','+loc.longitude} target="_blank" rel="noreferrer"
               style={{display:'flex',alignItems:'center',gap:8,padding:'7px 12px',background:'rgba(11,17,32,0.9)',borderRadius:10,textDecoration:'none',border:'1px solid rgba(96,165,250,0.2)'}}>
               <div style={{width:8,height:8,borderRadius:'50%',background:online?'#10B981':'#F59E0B',boxShadow:online?'0 0 6px #10B981':'none'}}/>
               <span style={{fontSize:13,fontWeight:700,color:'#EEF2FF'}}>{loc.usuarios?.nome||'Tecnico'}</span>
-              <span style={{fontSize:10,color:'#3D5070',marginLeft:4}}>{mins<1?'agora mesmo':mins+' min atras'} • Ver no Maps</span>
+              <span style={{fontSize:10,color:'#3D5070',marginLeft:4}}>{mins<1?'agora':mins+'min'} • Maps</span>
             </a>
           )
         })}
@@ -113,6 +94,7 @@ function MapaTecnicos({ localizacoes, apiKey }) {
     </div>
   )
 }
+
 
 export default function Dashboard() {
   const [stats, setStats]       = useState({tec:0,cli:0,osA:0,osC:0,fat:'R$0',estB:0})
