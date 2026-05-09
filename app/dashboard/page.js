@@ -17,74 +17,121 @@ function Card({ icon, label, value, change, up, color }) {
   )
 }
 
-function MapaTecnicos({ localizacoes }) {
+function MapaTecnicos({ localizacoes, apiKey }) {
   const mapRef = React.useRef(null)
   const mapObjRef = React.useRef(null)
-  const markersRef = React.useRef([])
 
   React.useEffect(() => {
     if (!localizacoes.length || !mapRef.current) return
 
-    // Carregar CSS do Leaflet
-    if (!document.querySelector('link[href*="leaflet"]')) {
-      const link = document.createElement('link')
-      link.rel = 'stylesheet'
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-      document.head.appendChild(link)
-    }
-
-    function initLeaflet(L) {
-      // Destruir mapa anterior se existir
-      if (mapObjRef.current) {
-        mapObjRef.current.remove()
-        mapObjRef.current = null
-      }
+    function initMap() {
+      if (mapObjRef.current) { mapObjRef.current.remove(); mapObjRef.current = null }
 
       const lats = localizacoes.map(l=>parseFloat(l.latitude))
       const lngs = localizacoes.map(l=>parseFloat(l.longitude))
       const clat = (Math.min(...lats)+Math.max(...lats))/2
       const clng = (Math.min(...lngs)+Math.max(...lngs))/2
 
-      const map = L.map(mapRef.current, {zoomControl:true}).setView([clat,clng], localizacoes.length===1?15:12)
-      mapObjRef.current = map
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: 'OpenStreetMap',
-        maxZoom: 19
-      }).addTo(map)
-
-      localizacoes.forEach(loc => {
-        const mins = Math.floor((Date.now()-new Date(loc.atualizado_em).getTime())/60000)
-        const online = mins < 2
-        const icon = L.divIcon({
-          className: '',
-          html: '<div style="background:'+(online?'#10B981':'#F59E0B')+';width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px '+(online?'#10B981':'#F59E0B')+'"></div>',
-          iconSize: [16,16],
-          iconAnchor: [8,8]
+      // Usar Google Maps se disponivel, senao OpenStreetMap
+      if (window.google && window.google.maps) {
+        const map = new window.google.maps.Map(mapRef.current, {
+          center: {lat:clat, lng:clng},
+          zoom: localizacoes.length===1?15:12,
+          mapTypeId: 'roadmap',
         })
-        const marker = L.marker([parseFloat(loc.latitude), parseFloat(loc.longitude)], {icon})
-          .addTo(map)
-          .bindPopup('<div style="font-family:sans-serif;min-width:120px"><b>'+(loc.usuarios?.nome||'Tecnico')+'</b><br><small>'+(mins<1?'Agora mesmo':mins+' min atras')+'</small></div>')
-        markersRef.current.push(marker)
-      })
+        mapObjRef.current = {remove: ()=>{}}
 
-      if (localizacoes.length > 1) {
-        const group = L.featureGroup(markersRef.current)
-        map.fitBounds(group.getBounds().pad(0.2))
+        localizacoes.forEach(loc => {
+          const mins = Math.floor((Date.now()-new Date(loc.atualizado_em).getTime())/60000)
+          const online = mins < 2
+          const nome = loc.usuarios?.nome||'Tecnico'
+
+          // Label com nome em cima do marcador
+          new window.google.maps.Marker({
+            position: {lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude)},
+            map,
+            label: {text: nome, color: '#fff', fontSize: '11px', fontWeight: 'bold'},
+            icon: {
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 14,
+              fillColor: online?'#10B981':'#F59E0B',
+              fillOpacity: 1,
+              strokeColor: '#fff',
+              strokeWeight: 2,
+            }
+          })
+        })
+
+        if (localizacoes.length > 1) {
+          const bounds = new window.google.maps.LatLngBounds()
+          localizacoes.forEach(l=>bounds.extend({lat:parseFloat(l.latitude),lng:parseFloat(l.longitude)}))
+          map.fitBounds(bounds)
+        }
+        return
+      }
+
+      // Fallback: Leaflet + OpenStreetMap
+      if (!document.querySelector('link[href*="leaflet"]')) {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+        document.head.appendChild(link)
+      }
+
+      function initLeaflet(L) {
+        const map = L.map(mapRef.current).setView([clat,clng], localizacoes.length===1?15:12)
+        mapObjRef.current = map
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map)
+
+        const markers = localizacoes.map(loc => {
+          const mins = Math.floor((Date.now()-new Date(loc.atualizado_em).getTime())/60000)
+          const online = mins < 2
+          const nome = loc.usuarios?.nome||'Tecnico'
+          const icon = L.divIcon({
+            className: '',
+            html: '<div style="position:relative;text-align:center">'+
+              '<div style="background:'+(online?'#10B981':'#F59E0B')+';width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px '+(online?'#10B981':'#F59E0B')+'"></div>'+
+              '<div style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:bold;white-space:nowrap">'+nome+'</div>'+
+              '</div>',
+            iconSize: [16,36],
+            iconAnchor: [8,36]
+          })
+          return L.marker([parseFloat(loc.latitude), parseFloat(loc.longitude)], {icon})
+            .addTo(map)
+            .bindPopup('<b>'+nome+'</b><br><small>'+(mins<1?'Agora mesmo':mins+' min atras')+'</small>')
+        })
+
+        if (localizacoes.length > 1) {
+          map.fitBounds(L.featureGroup(markers).getBounds().pad(0.3))
+        }
+      }
+
+      if (window.L) initLeaflet(window.L)
+      else {
+        const s = document.createElement('script')
+        s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+        s.onload = () => initLeaflet(window.L)
+        document.head.appendChild(s)
       }
     }
 
-    if (window.L) {
-      initLeaflet(window.L)
+    // Tentar carregar Google Maps primeiro
+    if (window.google && window.google.maps) {
+      initMap()
+    } else if (!document.querySelector('script[src*="maps.googleapis"]')) {
+      const s = document.createElement('script')
+      s.src = 'https://maps.googleapis.com/maps/api/js?key='+apiKey+'&loading=async'
+      s.onload = () => setTimeout(initMap, 200)
+      s.onerror = initMap // fallback para OpenStreetMap
+      document.head.appendChild(s)
     } else {
-      const script = document.createElement('script')
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-      script.onload = () => initLeaflet(window.L)
-      document.head.appendChild(script)
+      initMap()
     }
 
     return () => {
-      if (mapObjRef.current) { mapObjRef.current.remove(); mapObjRef.current = null }
+      if (mapObjRef.current && mapObjRef.current.remove) mapObjRef.current.remove()
+      mapObjRef.current = null
     }
   }, [JSON.stringify(localizacoes)])
 
