@@ -58,7 +58,7 @@ export default function Financeiro() {
 
   function editItem(item) {
     setEditId(item.id)
-    setForm({tipo:item.tipo||'receita',descricao:item.descricao||'',valor:item.valor||'',categoria:item.categoria||'',forma_pagamento:item.forma_pagamento||'',data:item.data||'',observacoes:item.observacoes||''})
+    setForm({tipo:item.tipo||'receita',descricao:item.descricao||'',valor:item.valor||'',categoria:item.categoria||'',forma_pagamento:item.forma_pagamento||'',data_lancamento:item.data_lancamento||'',observacoes:item.observacoes||''})
     setTab('novo')
   }
 
@@ -69,7 +69,7 @@ export default function Financeiro() {
   const fmtVal = v => 'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2})
   const fmtDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString('pt-BR') : '--'
 
-  const listMes = list.filter(i=> !filtroMes || i.data?.startsWith(filtroMes))
+  const listMes = list.filter(i=> !filtroMes || i.data_lancamento?.startsWith(filtroMes))
   const listFiltrada = listMes.filter(i=> !filtroTipo || i.tipo===filtroTipo)
 
   const receitas = listMes.filter(i=>i.tipo==='receita').reduce((a,i)=>a+parseFloat(i.valor||0),0)
@@ -86,8 +86,8 @@ export default function Financeiro() {
   }).reverse()
 
   const dadosMeses = ultimos6.map(m=>{
-    const rec = list.filter(i=>i.data?.startsWith(m)&&i.tipo==='receita').reduce((a,i)=>a+parseFloat(i.valor||0),0)
-    const desp = list.filter(i=>i.data?.startsWith(m)&&i.tipo==='despesa').reduce((a,i)=>a+parseFloat(i.valor||0),0)
+    const rec = list.filter(i=>i.data_lancamento?.startsWith(m)&&i.tipo==='receita').reduce((a,i)=>a+parseFloat(i.valor||0),0)
+    const desp = list.filter(i=>i.data_lancamento?.startsWith(m)&&i.tipo==='despesa').reduce((a,i)=>a+parseFloat(i.valor||0),0)
     const [y,mo] = m.split('-')
     return {mes:MESES_NOME[parseInt(mo)-1]+'/'+y.slice(2),rec,desp,saldo:rec-desp}
   })
@@ -105,7 +105,7 @@ export default function Financeiro() {
   // Lancamentos de OS
   const lancamentosOS = listMes.filter(i=>i.os_id)
 
-  const mesesDisp = [...new Set(list.map(i=>i.data?.slice(0,7)).filter(Boolean))].sort().reverse()
+  const mesesDisp = [...new Set(list.map(i=>i.data_lancamento?.slice(0,7)).filter(Boolean))].sort().reverse()
 
   return (
     <AppLayout>
