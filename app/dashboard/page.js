@@ -28,17 +28,23 @@ function MapaTecnicos({ localizacoes, apiKey }) {
       initMap()
       return
     }
+    if (document.querySelector('script[src*="maps.googleapis"]')) {
+      const check = setInterval(() => {
+        if (window.google && window.google.maps) { clearInterval(check); initMap() }
+      }, 100)
+      return
+    }
     const script = document.createElement('script')
     script.src = 'https://maps.googleapis.com/maps/api/js?key='+apiKey
     script.async = true
-    script.onload = initMap
+    script.onload = () => setTimeout(initMap, 100)
     document.head.appendChild(script)
   }, [localizacoes])
 
   function initMap() {
     if (!mapRef.current || !window.google) return
     const center = { lat: parseFloat(localizacoes[0].latitude), lng: parseFloat(localizacoes[0].longitude) }
-    if (!mapObjRef.current) {
+    if (!mapObjRef.current || !mapObjRef.current.getCenter) {
       mapObjRef.current = new window.google.maps.Map(mapRef.current, {
         center, zoom: 13,
         styles: [
