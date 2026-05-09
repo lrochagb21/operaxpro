@@ -19,7 +19,10 @@ export default function Financeiro() {
   const [editId,setEditId]     = useState(null)
   const [modal,setModal]       = useState(null)
   const [form,setForm]         = useState(empty)
-  const [filtroMes,setFiltroMes] = useState(new Date().toISOString().slice(0,7))
+  const [filtroMes,setFiltroMes] = useState(()=>{
+    const d = new Date()
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')
+  })
   const [filtroTipo,setFiltroTipo] = useState('')
 
   useEffect(()=>{ load() },[])
