@@ -26,7 +26,7 @@ export default function Financeiro() {
 
   async function load() {
     setLoading(true)
-    const {data} = await supabase.from('financeiro').select('*').order('data',{ascending:false})
+    const {data} = await supabase.from('financeiro').select('*').order('data_lancamento',{ascending:false})
     setList(data||[])
     setLoading(false)
   }
@@ -288,7 +288,7 @@ export default function Financeiro() {
                         <td style={{padding:'12px 14px',borderBottom:'1px solid rgba(96,165,250,0.05)'}}>
                           <span style={{fontSize:12,fontFamily:'monospace',color:'#60A5FA',fontWeight:700,background:'rgba(96,165,250,0.1)',padding:'3px 8px',borderRadius:6}}>#{item.os_id}</span>
                         </td>
-                        <td style={{padding:'12px 14px',borderBottom:'1px solid rgba(96,165,250,0.05)',fontSize:13,color:'#3D5070',whiteSpace:'nowrap'}}>{fmtDate(item.data)}</td>
+                        <td style={{padding:'12px 14px',borderBottom:'1px solid rgba(96,165,250,0.05)',fontSize:13,color:'#3D5070',whiteSpace:'nowrap'}}>{fmtDate(item.data_lancamento)}</td>
                         <td style={{padding:'12px 14px',borderBottom:'1px solid rgba(96,165,250,0.05)',fontSize:13,color:'#EEF2FF',fontWeight:600}}>{item.descricao}</td>
                         <td style={{padding:'12px 14px',borderBottom:'1px solid rgba(96,165,250,0.05)',fontSize:14,fontWeight:800,color:'#34D399',whiteSpace:'nowrap'}}>+ {fmtVal(item.valor)}</td>
                         <td style={{padding:'12px 14px',borderBottom:'1px solid rgba(96,165,250,0.05)',fontSize:12,color:'#8899BB'}}>{item.forma_pagamento||'--'}</td>
@@ -333,7 +333,7 @@ export default function Financeiro() {
                       <tr key={item.id} onClick={()=>setModal(item)}
                         onMouseEnter={e=>{e.currentTarget.style.background='rgba(96,165,250,0.03)';e.currentTarget.style.cursor='pointer'}}
                         onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-                        <td style={{padding:'12px 14px',borderBottom:'1px solid rgba(96,165,250,0.05)',fontSize:13,color:'#3D5070',whiteSpace:'nowrap'}}>{fmtDate(item.data)}</td>
+                        <td style={{padding:'12px 14px',borderBottom:'1px solid rgba(96,165,250,0.05)',fontSize:13,color:'#3D5070',whiteSpace:'nowrap'}}>{fmtDate(item.data_lancamento)}</td>
                         <td style={{padding:'12px 14px',borderBottom:'1px solid rgba(96,165,250,0.05)'}}>
                           <span style={{padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:700,background:item.tipo==='receita'?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)',color:item.tipo==='receita'?'#34D399':'#FCA5A5'}}>
                             {item.tipo==='receita'?'Receita':'Despesa'}
@@ -437,7 +437,7 @@ export default function Financeiro() {
             </div>
             <div style={{fontSize:14,fontWeight:700,color:'#EEF2FF',marginBottom:14}}>{modal.descricao}</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
-              {[['Data',fmtDate(modal.data)],['Categoria',modal.categoria||'--'],['Forma Pagamento',modal.forma_pagamento||'--']].map(([l,v])=>(
+              {[['Data',fmtDate(modal.data_lancamento)],['Categoria',modal.categoria||'--'],['Forma Pagamento',modal.forma_pagamento||'--']].map(([l,v])=>(
                 <div key={l} style={{background:'rgba(96,165,250,0.04)',borderRadius:10,padding:'10px 12px'}}>
                   <div style={{fontSize:10,fontWeight:700,color:'#3D5070',letterSpacing:'0.8px',textTransform:'uppercase',marginBottom:3}}>{l}</div>
                   <div style={{fontSize:13,color:'#EEF2FF',fontWeight:600}}>{v}</div>
