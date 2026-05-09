@@ -29,6 +29,8 @@ export default function TecnicoView() {
   const [formCli, setFormCli] = useState(emptyCli)
   const [saving, setSaving]     = useState(false)
   const [msg, setMsg]           = useState({text:'',type:''})
+  const [gpsAtivo, setGpsAtivo] = useState(false)
+  const [gpsErro, setGpsErro]   = useState('')
   const emptyOrc = {cliente_id:'',tipo_servico:'',descricao:'',valor:'',desconto:'',pecas:'',observacoes:'',data_abertura:'',hora_atendimento:''}
   const [formOrc, setFormOrc]   = useState(emptyOrc)
   const router = useRouter()
@@ -105,6 +107,30 @@ export default function TecnicoView() {
     if (c.length > 5) c = c.slice(0,5)+'-'+c.slice(5)
     setFormCli(p=>({...p,cep:c}))
     if (c.replace(/\D/g,'').length===8) buscarCep(c)
+  }
+
+  function ativarGPS() {
+    if (!navigator.geolocation) { setGpsErro('GPS nao disponivel neste dispositivo'); return }
+    setGpsErro('')
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        setGpsAtivo(true)
+        await supabase.from('localizacoes').upsert({
+          tecnico_id: user.id,
+          empresa_id: 1,
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          precisao: pos.coords.accuracy,
+          atualizado_em: new Date().toISOString(),
+        }, {onConflict: 'tecnico_id'})
+        showMsg('Localizacao compartilhada com sucesso!','ok')
+      },
+      err => {
+        setGpsErro('Permita o acesso ao GPS nas configuracoes do navegador')
+        setGpsAtivo(false)
+      },
+      {enableHighAccuracy: true, timeout: 10000}
+    )
   }
 
   async function criarCliente(e) {
@@ -189,6 +215,10 @@ export default function TecnicoView() {
           </div>
         </div>
         <div style={{display:'flex',gap:8}}>
+          <button onClick={ativarGPS} style={{padding:'7px 14px',borderRadius:8,background:gpsAtivo?'rgba(16,185,129,.2)':'rgba(96,165,250,.15)',border:gpsAtivo?'1px solid rgba(16,185,129,.4)':'1px solid rgba(96,165,250,.3)',color:gpsAtivo?'#34D399':'#93C5FD',fontSize:12,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:5}}>
+            <span style={{width:7,height:7,borderRadius:'50%',background:gpsAtivo?'#10B981':'#93C5FD',display:'inline-block',boxShadow:gpsAtivo?'0 0 6px #10B981':'none'}}/>
+            {gpsAtivo?'GPS Ativo':'Ativar GPS'}
+          </button>
           <button onClick={()=>setModalCli(true)} style={{padding:'7px 14px',borderRadius:8,background:'rgba(16,185,129,.15)',border:'1px solid rgba(16,185,129,.3)',color:'#34D399',fontSize:12,fontWeight:700,cursor:'pointer'}}>+ Cliente</button>
           <button onClick={()=>setModalOrc(true)} style={{padding:'7px 14px',borderRadius:8,background:'rgba(6,182,212,.15)',border:'1px solid rgba(6,182,212,.3)',color:'#67E8F9',fontSize:12,fontWeight:700,cursor:'pointer'}}>+ Orçamento</button>
           <button onClick={logout} style={{padding:'7px 14px',borderRadius:8,background:'rgba(239,68,68,.12)',border:'1px solid rgba(239,68,68,.25)',color:'#FCA5A5',fontSize:12,fontWeight:600,cursor:'pointer'}}>Sair</button>
@@ -197,6 +227,7 @@ export default function TecnicoView() {
 
       <div style={{padding:16,maxWidth:600,margin:'0 auto'}}>
 
+        {gpsErro&&<div style={{marginBottom:12,padding:'12px 16px',borderRadius:10,fontSize:13,fontWeight:600,background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.25)',color:'#FCA5A5'}}>{gpsErro}</div>}
         {msg.text&&<div style={{marginBottom:12,padding:'12px 16px',borderRadius:10,fontSize:13,fontWeight:600,background:msg.type==='ok'?'rgba(16,185,129,.1)':'rgba(239,68,68,.1)',border:msg.type==='ok'?'1px solid rgba(16,185,129,.25)':'1px solid rgba(239,68,68,.25)',color:msg.type==='ok'?'#34D399':'#FCA5A5'}}>{msg.text}</div>}
 
         {/* Resumo */}
