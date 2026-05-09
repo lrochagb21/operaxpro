@@ -138,6 +138,32 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Grafico de barras OS por status */}
+        <div style={{background:'#0F1729',border:'1px solid rgba(96,165,250,0.07)',borderRadius:16,padding:20,marginBottom:16}}>
+          <div style={{fontSize:14,fontWeight:800,color:'#EEF2FF',marginBottom:4}}>Ordens de Servico por Status</div>
+          <div style={{fontSize:11,color:'#3D5070',marginBottom:20}}>Visao geral de todas as OS</div>
+          <div style={{display:'flex',gap:12,alignItems:'flex-end',height:160}}>
+            {[
+              {l:'Urgentes',    v:os.filter(o=>o.prioridade==='Urgente'&&o.status!=='Concluída'&&o.status!=='Cancelada').length, c:'#FCA5A5',bg:'rgba(239,68,68,.6)'},
+              {l:'Abertas',     v:os.filter(o=>o.status==='Aberta').length,          c:'#FCD34D',bg:'rgba(245,158,11,.6)'},
+              {l:'Andamento',   v:os.filter(o=>o.status==='Em Andamento').length,    c:'#93C5FD',bg:'rgba(96,165,250,.6)'},
+              {l:'Ag. Peca',    v:os.filter(o=>o.status==='Aguardando Peça').length, c:'#C4B5FD',bg:'rgba(139,92,246,.6)'},
+              {l:'Concluidas',  v:os.filter(o=>o.status==='Concluída').length,       c:'#34D399',bg:'rgba(16,185,129,.6)'},
+              {l:'Canceladas',  v:os.filter(o=>o.status==='Cancelada').length,       c:'#8899BB',bg:'rgba(96,165,250,.2)'},
+            ].map(({l,v,c,bg})=>{
+              const maxV = Math.max(os.length,1)
+              const h = Math.max((v/maxV)*130,v>0?8:0)
+              return(
+                <div key={l} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
+                  <div style={{fontSize:13,fontWeight:800,color:c}}>{v}</div>
+                  <div style={{width:'100%',background:bg,borderRadius:'6px 6px 0 0',height:h+'px',transition:'height .3s',minHeight:v>0?8:2,border:`1px solid ${c}50`}}/>
+                  <div style={{fontSize:10,color:'#3D5070',textAlign:'center',fontWeight:600}}>{l}</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
         {/* Grid: Pizza + Tabela OS */}
         <div style={{display:'grid',gridTemplateColumns:'300px 1fr',gap:16,alignItems:'start'}}>
 
