@@ -1,3 +1,4 @@
+import React from 'react'
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -14,6 +15,74 @@ function Card({ icon, label, value, change, up, color }) {
       <div style={{fontSize:11,fontWeight:700,marginTop:4,color:up?'#10B981':'#EF4444'}}>{change}</div>
     </div>
   )
+}
+
+function MapaTecnicos({ localizacoes, apiKey }) {
+  const mapRef = React.useRef(null)
+  const mapObjRef = React.useRef(null)
+  const markersRef = React.useRef([])
+
+  React.useEffect(() => {
+    if (!localizacoes.length) return
+    if (window.google && window.google.maps) {
+      initMap()
+      return
+    }
+    const script = document.createElement('script')
+    script.src = 'https://maps.googleapis.com/maps/api/js?key='+apiKey
+    script.async = true
+    script.onload = initMap
+    document.head.appendChild(script)
+  }, [localizacoes])
+
+  function initMap() {
+    if (!mapRef.current || !window.google) return
+    const center = { lat: parseFloat(localizacoes[0].latitude), lng: parseFloat(localizacoes[0].longitude) }
+    if (!mapObjRef.current) {
+      mapObjRef.current = new window.google.maps.Map(mapRef.current, {
+        center, zoom: 15,
+        styles: [
+          {elementType:'geometry',stylers:[{color:'#1a2035'}]},
+          {elementType:'labels.text.stroke',stylers:[{color:'#0F1729'}]},
+          {elementType:'labels.text.fill',stylers:[{color:'#8899BB'}]},
+          {featureType:'road',elementType:'geometry',stylers:[{color:'#162040'}]},
+          {featureType:'road',elementType:'labels.text.fill',stylers:[{color:'#60A5FA'}]},
+          {featureType:'water',elementType:'geometry',stylers:[{color:'#0B1120'}]},
+          {featureType:'poi',stylers:[{visibility:'off'}]},
+        ]
+      })
+    }
+    // Limpar marcadores antigos
+    markersRef.current.forEach(m => m.setMap(null))
+    markersRef.current = []
+    // Adicionar marcadores
+    localizacoes.forEach(loc => {
+      const mins = Math.floor((Date.now() - new Date(loc.atualizado_em).getTime()) / 60000)
+      const marker = new window.google.maps.Marker({
+        position: { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) },
+        map: mapObjRef.current,
+        title: loc.nome || 'Tecnico',
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 12,
+          fillColor: mins < 2 ? '#10B981' : '#F59E0B',
+          fillOpacity: 1,
+          strokeColor: '#fff',
+          strokeWeight: 2,
+        }
+      })
+      const info = new window.google.maps.InfoWindow({
+        content: '<div style="color:#000;font-family:sans-serif;padding:4px"><strong>'+(loc.nome||'Tecnico')+'</strong><br><small>'+(mins<1?'Agora mesmo':mins+' min atras')+'</small></div>'
+      })
+      marker.addListener('click', () => info.open(mapObjRef.current, marker))
+      markersRef.current.push(marker)
+    })
+    if (localizacoes.length === 1) {
+      mapObjRef.current.setCenter({ lat: parseFloat(localizacoes[0].latitude), lng: parseFloat(localizacoes[0].longitude) })
+    }
+  }
+
+  return <div ref={mapRef} style={{width:'100%',height:'100%'}}/>
 }
 
 export default function Dashboard() {
