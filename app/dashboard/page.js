@@ -78,6 +78,7 @@ function MapaTecnicos({ localizacoes, apiKey }) {
       markersRef.current.push(marker)
     })
     // Ajustar bounds para mostrar todos os tecnicos
+    console.log('LOCS NO MAPA:', localizacoes)
     const bounds = new window.google.maps.LatLngBounds()
     localizacoes.forEach(loc => {
       bounds.extend({ lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) })
